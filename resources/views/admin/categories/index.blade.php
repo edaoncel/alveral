@@ -26,24 +26,33 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- SOL TARAF: TEK VE DÜZENLİ KATEGORİ EKLEME FORMU -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-    <h2 class="text-lg font-bold text-gray-900 mb-4">Yeni Kategori Ekle</h2>
-    <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-        @csrf
-        <div>
-            <label class="block text-gray-700 font-medium mb-1 text-sm">Kategori Adı</label>
-            <input type="text" name="name" value="{{ old('name') }}" placeholder="Örn: Elektronik" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" required>
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Yeni Kategori Ekle</h2>
+            
+            <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1 text-sm">Kategori Adı</label>
+                    <input type="text" name="name" value="{{ old('name') }}" placeholder="Örn: YILBAŞI" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" required>
+                </div>
+
+                <!-- ÜST MENÜDE GÖSTER KUTUCUĞU -->
+                <div class="flex items-center gap-2.5 py-1">
+                    <input type="checkbox" name="show_in_menu" value="1" id="show_in_menu" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer">
+                    <label for="show_in_menu" class="text-xs font-semibold text-gray-700 cursor-pointer">Bu kategoriyi üst menüde (navbar) göster</label>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1 text-sm">Kapak Fotoğrafı</label>
+                    <input type="file" name="image" accept="image/*" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-800 text-white py-3 rounded-xl font-bold hover:bg-emerald-900 transition shadow-sm text-sm">Kategori Ekle</button>
+            </form>
         </div>
 
-        <div>
-            <label class="block text-gray-700 font-medium mb-1 text-sm">Kapak Fotoğrafı</label>
-            <input type="file" name="image" accept="image/*" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-brandOrange hover:file:bg-orange-100">
-        </div>
-
-        <button type="submit" class="w-full bg-brandOrange text-white py-3 rounded-xl font-bold hover:bg-orange-600 transition shadow-sm text-sm">Kategori Ekle</button>
-    </form>
-</div>
-
+        <!-- SAĞ TARAF: KATEGORİLER TABLOSU -->
         <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -68,10 +77,15 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="py-4 px-4 font-bold text-gray-900">{{ $category->name }}</td>
+                                <td class="py-4 px-4 font-bold text-gray-900 flex items-center gap-2">
+                                    <span>{{ $category->name }}</span>
+                                    @if($category->show_in_menu)
+                                        <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Menüde</span>
+                                    @endif
+                                </td>
                                 <td class="py-4 px-4 text-xs font-mono text-slate-500">{{ $category->slug }}</td>
                                 <td class="py-4 px-4 text-center">
-                                    <span class="bg-sky-50 text-brandBlue px-2.5 py-1 rounded-lg text-xs font-semibold">{{ $category->products_count }}</span>
+                                    <span class="bg-sky-50 text-brandBlue px-2.5 py-1 rounded-lg text-xs font-semibold">{{ $category->products_count ?? $category->products->count() }}</span>
                                 </td>
                                 <td class="py-4 px-4 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">

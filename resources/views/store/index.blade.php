@@ -31,79 +31,113 @@
 <nav class="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex justify-between items-center">
             
-            <a href="{{ url('/') }}" class="flex items-center">
-                <img src="{{ asset('img/logo/logo.png') }}" alt="Alveral" class="h-12 sm:h-12 w-auto object-contain">
-            </a>
+    <a href="{{ url('/') }}" class="flex items-center">
+        <img src="{{ asset('img/logo/logo.png') }}" alt="Alveral" class="h-12 sm:h-12 w-auto object-contain">
+    </a>
 
-            <div class="hidden md:flex items-center space-x-10 text-sm font-medium tracking-wide text-gray-700">
-                <a href="{{ url('/') }}" class="text-brandOrange font-semibold transition">ANASAYFA</a>
-                
-                <div class="relative" x-data="{ catOpen: false }">
-                    <button @click="catOpen = !catOpen" @click.away="catOpen = false" type="button" class="flex items-center gap-1.5 hover:text-brandOrange transition focus:outline-none">
-                        KATEGORİLER
-                        <svg class="w-4 h-4 transition-transform duration-200" :class="catOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    
-                    <div x-show="catOpen" x-cloak 
-                         x-transition:enter="transition ease-out duration-200" 
-                         x-transition:enter-start="opacity-0 translate-y-2" 
-                         x-transition:enter-end="opacity-100 translate-y-0" 
-                         class="absolute left-0 mt-4 w-60 bg-white border border-gray-100 rounded-2xl shadow-2xl py-3 z-50">
-                        <a href="{{ url('/#urunler') }}" class="block px-5 py-2.5 text-xs uppercase tracking-wider font-bold text-gray-800 hover:bg-gray-50 hover:text-brandOrange transition">Tüm Ürünler</a>
-                        @foreach($categories as $cat)
-                            <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block px-5 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-brandOrange transition">
-                                {{ $cat->name }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
+    <!-- Menüde gösterilecek kategorileri tek bir yerde çekiyoruz -->
+    @php
+        $menuCategories = \App\Models\Category::where('show_in_menu', true)->get();
+    @endphp
 
-                <a href="{{ route('contact') }}" class="hover:text-brandOrange transition">İLETİŞİM</a>
-            </div>
-
-            <div class="flex items-center gap-4">
-                @auth('admin')
-                    <a href="{{ route('admin.dashboard') }}" class="hidden sm:inline-flex bg-gray-900 text-white hover:bg-brandOrange px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition">Panel</a>
-                @else
-                    <a href="{{ route('admin.login') }}" class="hidden sm:inline-flex bg-gray-900 text-white hover:bg-brandOrange px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition">Admin Girişi</a>
-                @endauth
-
-                <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 text-gray-700 rounded-xl focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
+    <div class="hidden md:flex items-center space-x-10 text-sm font-medium tracking-wide text-gray-700">
+        <!-- 1. ANASAYFA -->
+        <a href="{{ url('/') }}" class="text-brandOrange font-semibold transition">ANASAYFA</a>
+        
+        <!-- 2. KATEGORİLER (Dropdown) -->
+        <div class="relative" x-data="{ catOpen: false }">
+            <button @click="catOpen = !catOpen" @click.away="catOpen = false" type="button" class="flex items-center gap-1.5 hover:text-brandOrange transition focus:outline-none">
+                KATEGORİLER
+                <svg class="w-4 h-4 transition-transform duration-200" :class="catOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            
+            <div x-show="catOpen" x-cloak 
+                 x-transition:enter="transition ease-out duration-200" 
+                 x-transition:enter-start="opacity-0 translate-y-2" 
+                 x-transition:enter-end="opacity-100 translate-y-0" 
+                 class="absolute left-0 mt-4 w-60 bg-white border border-gray-100 rounded-2xl shadow-2xl py-3 z-50">
+                <a href="{{ url('/#urunler') }}" class="block px-5 py-2.5 text-xs uppercase tracking-wider font-bold text-gray-800 hover:bg-gray-50 hover:text-brandOrange transition">Tüm Ürünler</a>
+                @foreach($menuCategories as $cat)
+                    <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block px-5 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-brandOrange transition">
+                        {{ $cat->name }}
+                    </a>
+                @endforeach
             </div>
         </div>
+
+        <!-- 3. MENÜ KATEGORİLERİ (Doğrudan Akışta) -->
+        @foreach($menuCategories as $menuCat)
+            <a href="{{ url('/?category=' . $menuCat->slug . '#urunler') }}" class="hover:text-brandOrange transition">
+                {{ $menuCat->name }}
+            </a>
+        @endforeach
+
+        <!-- 4. İLETİŞİM -->
+        <a href="{{ route('contact') }}" class="hover:text-brandOrange transition">İLETİŞİM</a>
+    </div>
+
+    <div class="flex items-center gap-4">
+        @auth('admin')
+            <a href="{{ route('admin.dashboard') }}" class="hidden sm:inline-flex bg-gray-900 text-white hover:bg-brandOrange px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition">Panel</a>
+        @else
+            <a href="{{ route('admin.login') }}" class="hidden sm:inline-flex bg-gray-900 text-white hover:bg-brandOrange px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition">Admin Girişi</a>
+        @endauth
+
+        <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 text-gray-700 rounded-xl focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+    </div>
+</div>
 
         <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-b border-gray-100 px-6 py-5 space-y-4 shadow-xl">
-            <a href="{{ url('/') }}" class="block text-sm font-bold text-brandOrange">ANASAYFA</a>
-            
-            <div>
-                <button @click="mobileCatOpen = !mobileCatOpen" type="button" class="w-full flex justify-between items-center text-xs font-extrabold text-gray-400 uppercase tracking-widest pt-2 focus:outline-none">
-                    <span>KATEGORİLER</span>
-                    <svg class="w-4 h-4 transition-transform duration-200" :class="mobileCatOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                
-                <div x-show="mobileCatOpen" x-cloak class="pl-3 mt-3 space-y-2.5 border-l-2 border-orange-100 max-h-48 overflow-y-auto">
-                    <a href="{{ url('/#urunler') }}" class="block text-xs font-semibold text-gray-800">Tüm Ürünler</a>
-                    @if(isset($categories))
-                        @foreach($categories as $cat)
-                            <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block text-xs text-gray-600 hover:text-brandOrange transition">{{ $cat->name }}</a>
-                        @endforeach
-                    @endif
-                </div>
-            </div>
+    <!-- 1. ANASAYFA -->
+    <a href="{{ url('/') }}" class="block text-sm font-bold text-brandOrange">ANASAYFA</a>
+    
+    <!-- Kategorileri tek bir yerde çekiyoruz -->
+    @php
+        $menuCategories = \App\Models\Category::where('show_in_menu', true)->get();
+    @endphp
 
-            <div class="pt-2">
-                <a href="{{ route('contact') }}" class="block text-sm font-bold text-brandOrange">İLETİŞİM</a>
-            </div>
-            <div class="pt-2">
-                @auth('admin')
-                    <a href="{{ route('admin.dashboard') }}" class="block text-center bg-gray-900 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider">Panel</a>
-                @else
-                    <a href="{{ route('admin.login') }}" class="block text-center bg-gray-900 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider">Admin Girişi</a>
-                @endauth
-            </div>
+    <!-- 2. KATEGORİLER (Açılır Menü) -->
+    <div>
+        <button @click="mobileCatOpen = !mobileCatOpen" type="button" class="w-full flex justify-between items-center text-xs font-extrabold text-gray-400 uppercase tracking-widest pt-2 focus:outline-none">
+            <span>KATEGORİLER</span>
+            <svg class="w-4 h-4 transition-transform duration-200" :class="mobileCatOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        
+        <div x-show="mobileCatOpen" x-cloak class="pl-3 mt-3 space-y-2.5 border-l-2 border-orange-100 max-h-48 overflow-y-auto">
+            <a href="{{ url('/#urunler') }}" class="block text-xs font-semibold text-gray-800">Tüm Ürünler</a>
+            @if(isset($categories))
+                @foreach($categories as $cat)
+                    <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block text-xs text-gray-600 hover:text-brandOrange transition">{{ $cat->name }}</a>
+                @endforeach
+            @endif
         </div>
+    </div>
+    
+    <!-- 3. MENÜ KATEGORİLERİ (Doğrudan Akışta) -->
+    <div class="space-y-2 pt-1">
+        @foreach($menuCategories as $menuCat)
+            <a href="{{ url('/?category=' . $menuCat->slug . '#urunler') }}" class="block text-sm font-medium text-gray-700 hover:text-brandOrange transition">
+                {{ $menuCat->name }}
+            </a>
+        @endforeach
+    </div>
+
+    <!-- 4. İLETİŞİM -->
+    <div class="pt-2">
+        <a href="{{ route('contact') }}" class="block text-sm font-bold text-brandOrange">İLETİŞİM</a>
+    </div>
+    
+    <!-- 5. ADMIN GİRİŞİ -->
+    <div class="pt-2">
+        @auth('admin')
+            <a href="{{ route('admin.dashboard') }}" class="block text-center bg-gray-900 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider">Panel</a>
+        @else
+            <a href="{{ route('admin.login') }}" class="block text-center bg-gray-900 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider">Admin Girişi</a>
+        @endauth
+    </div>
+</div>
     </nav>
 
     <header class="bg-gray-200 text-white py-20 px-6 text-center relative overflow-hidden">

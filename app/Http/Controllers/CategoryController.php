@@ -20,6 +20,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'show_in_menu' => 'nullable|boolean', // Menüde gösterilsin mi kontrolü
         ]);
 
         $imagePath = null;
@@ -40,6 +41,7 @@ class CategoryController extends Controller
             'name' => $validated['name'],
             'slug' => $slug,
             'image' => $imagePath,
+            'show_in_menu' => $request->has('show_in_menu') ? 1 : 0, // İşaretlendiyse 1, değilse 0
         ]);
 
         return back()->with('success', 'Kategori ve kapak görseli başarıyla eklendi.');
@@ -62,6 +64,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'show_in_menu' => 'nullable|boolean',
         ]);
 
         if ($request->hasFile('image')) {
@@ -82,6 +85,7 @@ class CategoryController extends Controller
 
         $category->name = $validated['name'];
         $category->slug = $slug;
+        $category->show_in_menu = $request->has('show_in_menu') ? 1 : 0; // Güncelleme anında menü durumu
         $category->save();
 
         return back()->with('success', 'Kategori başarıyla güncellendi.');

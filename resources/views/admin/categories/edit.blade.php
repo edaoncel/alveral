@@ -40,6 +40,14 @@
                 <input type="text" name="name" value="{{ old('name', $category->name) }}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 focus:outline-none focus:border-brandOrange focus:ring-1 focus:ring-brandOrange transition">
             </div>
 
+            <!-- Menüde Göster Seçeneği -->
+            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <input type="checkbox" name="show_in_menu" id="show_in_menu" value="1" {{ old('show_in_menu', $category->show_in_menu) ? 'checked' : '' }} class="w-5 h-5 text-brandOrange border-slate-300 rounded focus:ring-brandOrange">
+                <label for="show_in_menu" class="text-sm font-bold text-slate-700 cursor-pointer select-none">
+                    Bu kategoriyi menülerde göster.
+                </label>
+            </div>
+
             <div>
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Mevcut Kapak Görseli</label>
                 <div class="flex items-center gap-4 mb-4">
