@@ -18,10 +18,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Product::observe(ProductObserver::class);
-
-        View::composer('layouts.store', function ($view) {
+        View::composer('*', function ($view) {
             $view->with('categories', Category::all());
+            $view->with('menuCategories', Category::where('show_in_menu', true)->get());
         });
     }
 }

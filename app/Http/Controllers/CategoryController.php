@@ -20,12 +20,18 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'show_in_menu' => 'nullable|boolean', // Menüde gösterilsin mi kontrolü
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'show_in_menu' => 'nullable|boolean',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('categories', 'public');
+        }
+
+        $bannerPath = null;
+        if ($request->hasFile('banner_image')) {
+            $bannerPath = $request->file('banner_image')->store('categories/banners', 'public');
         }
 
         $slug = Str::slug($validated['name']);
@@ -41,29 +47,25 @@ class CategoryController extends Controller
             'name' => $validated['name'],
             'slug' => $slug,
             'image' => $imagePath,
-            'show_in_menu' => $request->has('show_in_menu') ? 1 : 0, // İşaretlendiyse 1, değilse 0
+            'banner_image' => $bannerPath,
+            'show_in_menu' => $request->has('show_in_menu') ? 1 : 0,
         ]);
 
-        return back()->with('success', 'Kategori ve kapak görseli başarıyla eklendi.');
+        return back()->with('success', 'Kategori ve görselleri başarıyla eklendi.');
     }
 
-    public function destroy(Category $category)
+    public function edit(Category $category)
     {
-        if ($category->image) {
-            Storage::disk('public')->delete($category->image);
-        }
-        
-        $category->delete();
-        return redirect()->route('admin.categories.index')->with('success', 'Kategori başarıyla silindi.');
+        $categories = Category::withCount('products')->latest()->get();
+        return view('admin.categories.edit', compact('category', 'categories'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Category $category)
     {
-        $category = Category::findOrFail($id);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             'show_in_menu' => 'nullable|boolean',
         ]);
 
@@ -72,6 +74,13 @@ class CategoryController extends Controller
                 Storage::disk('public')->delete($category->image);
             }
             $category->image = $request->file('image')->store('categories', 'public');
+        }
+
+        if ($request->hasFile('banner_image')) {
+            if ($category->banner_image) {
+                Storage::disk('public')->delete($category->banner_image);
+            }
+            $category->banner_image = $request->file('banner_image')->store('categories/banners', 'public');
         }
 
         $slug = Str::slug($validated['name']);
@@ -85,17 +94,24 @@ class CategoryController extends Controller
 
         $category->name = $validated['name'];
         $category->slug = $slug;
-        $category->show_in_menu = $request->has('show_in_menu') ? 1 : 0; // Güncelleme anında menü durumu
+        $category->show_in_menu = $request->has('show_in_menu') ? 1 : 0;
         $category->save();
 
-        return back()->with('success', 'Kategori başarıyla güncellendi.');
+        return redirect()->route('admin.categories.index')->with('success', 'Kategori başarıyla güncellendi.');
     }
 
-    public function edit($id)
+    public function destroy(Category $category)
     {
-        $category = Category::findOrFail($id);
-        $categories = Category::withCount('products')->latest()->get();
+        if ($category->image) {
+            Storage::disk('public')->delete($category->image);
+        }
         
-        return view('admin.categories.edit', compact('category', 'categories'));
+        if ($category->banner_image) {
+            Storage::disk('public')->delete($category->banner_image);
+        }
+        
+        $category->delete();
+
+        return redirect()->route('admin.categories.index')->with('success', 'Kategori başarıyla silindi.');
     }
 }

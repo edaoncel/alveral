@@ -92,7 +92,7 @@
                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Hepsiburada Linki</label>
                 <input type="url" name="hepsiburada_url" value="{{ old('hepsiburada_url', $product->hepsiburada_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.hepsiburada.com/...">
             </div>
-            <div>
+            <!-- <div>
                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">İdefix Linki</label>
                 <input type="url" name="idefix_url" value="{{ old('idefix_url', $product->idefix_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.idefix.com/...">
             </div>
@@ -103,7 +103,7 @@
             <div class="md:col-span-2">
                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Pazarama Linki</label>
                 <input type="url" name="pazarama_url" value="{{ old('pazarama_url', $product->pazarama_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.pazarama.com/...">
-            </div>
+            </div> -->
         </div>
 
         @if($product->images && count($product->images) > 0)

@@ -1,3 +1,8 @@
+@extends('layouts.store')
+
+@section('title', 'Alveral - KVKK Aydınlatma Metni ve Gizlilik Politikası')
+
+@section('content')
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -5,12 +10,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alveral - E- Ticaret Resmi Satış Sitesi</title>
     <link rel="icon" type="image/png" href="{{ asset('img/logo/link_logo.png') }}">
+    
     <style>
         [x-cloak] { display: none !important; }
+
+        @keyframes floatStar {
+            0% { transform: translateY(0px) scale(0.6); opacity: 0.3; }
+            50% { transform: translateY(-30px) scale(1.4); opacity: 1; filter: drop-shadow(0 0 8px #ffd700); }
+            100% { transform: translateY(0px) scale(0.6); opacity: 0.3; }
+        }
+        .magic-star {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #fff 0%, #ffd700 40%, #ffaa00 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px #ffd700, 0 0 20px #ffcc00;
+            animation: floatStar 3s ease-in-out infinite;
+            z-index: 40;
+        }
+        @keyframes specialBoxPulse {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(249, 115, 22, 0.3), inset 0 0 5px rgba(249, 115, 22, 0.1);
+                border-color: #fb923c; /* orange-400 */
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(249, 115, 22, 0.7), inset 0 0 12px rgba(249, 115, 22, 0.3);
+                border-color: #f97316; /* brandOrange */
+            }
+        }
     </style>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    @php
+        $activeCategory = null;
+        if(request('category')) {
+            $activeCategory = \App\Models\Category::where('slug', request('category'))->first();
+        }
+        $isSpecialCategory = ($activeCategory && $activeCategory->show_in_menu) ? true : false;
+    @endphp
+
+ <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const isSpecial = @json($isSpecialCategory);
+
+        if (isSpecial) {
+            const container = document.getElementById('special-collection-area');
+            
+            if (container) {
+                const starCount = 120;
+
+                for (let i = 0; i < starCount; i++) {
+                    let star = document.createElement('div');
+                    star.className = 'magic-star';
+                    
+                    // Alanın genişliği ve yüksekliği içinde rastgele dağıtalım
+                    let posX = Math.random() * container.clientWidth;
+                    let posY = Math.random() * container.scrollHeight;
+                    
+                    star.style.left = posX + 'px';
+                    star.style.top = posY + 'px';
+                    
+                    let animDuration = 1.5 + Math.random() * 3.5; 
+                    let animDelay = Math.random() * 3; 
+                    
+                    star.style.animationDuration = animDuration + 's';
+                    star.style.animationDelay = animDelay + 's';
+                    
+                    let size = 6 + Math.random() * 8; 
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+
+                    container.appendChild(star);
+                }
+            }
+        }
+    });
+</script>
     <script>
         tailwind.config = {
             theme: {
@@ -26,120 +105,7 @@
     </script>
 </head>
 
-    <body class="bg-white min-h-screen text-gray-900 antialiased" x-data="{ mobileMenu: false, mobileCatOpen: false }">
-
-<nav class="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex justify-between items-center">
-            
-    <a href="{{ url('/') }}" class="flex items-center">
-        <img src="{{ asset('img/logo/logo.png') }}" alt="Alveral" class="h-12 sm:h-12 w-auto object-contain">
-    </a>
-
-    <!-- Menüde gösterilecek kategorileri tek bir yerde çekiyoruz -->
-    @php
-        $menuCategories = \App\Models\Category::where('show_in_menu', true)->get();
-    @endphp
-
-    <div class="hidden md:flex items-center space-x-10 text-sm font-medium tracking-wide text-gray-700">
-        <!-- 1. ANASAYFA -->
-        <a href="{{ url('/') }}" class="text-brandOrange font-semibold transition">ANASAYFA</a>
-        
-        <!-- 2. KATEGORİLER (Dropdown) -->
-        <div class="relative" x-data="{ catOpen: false }">
-            <button @click="catOpen = !catOpen" @click.away="catOpen = false" type="button" class="flex items-center gap-1.5 hover:text-brandOrange transition focus:outline-none">
-                KATEGORİLER
-                <svg class="w-4 h-4 transition-transform duration-200" :class="catOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-            
-            <div x-show="catOpen" x-cloak 
-                 x-transition:enter="transition ease-out duration-200" 
-                 x-transition:enter-start="opacity-0 translate-y-2" 
-                 x-transition:enter-end="opacity-100 translate-y-0" 
-                 class="absolute left-0 mt-4 w-60 bg-white border border-gray-100 rounded-2xl shadow-2xl py-3 z-50">
-                <a href="{{ url('/#urunler') }}" class="block px-5 py-2.5 text-xs uppercase tracking-wider font-bold text-gray-800 hover:bg-gray-50 hover:text-brandOrange transition">Tüm Ürünler</a>
-                @foreach($menuCategories as $cat)
-                    <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block px-5 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-brandOrange transition">
-                        {{ $cat->name }}
-                    </a>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- 3. MENÜ KATEGORİLERİ (Doğrudan Akışta) -->
-        @foreach($menuCategories as $menuCat)
-            <a href="{{ url('/?category=' . $menuCat->slug . '#urunler') }}" class="hover:text-brandOrange transition">
-                {{ $menuCat->name }}
-            </a>
-        @endforeach
-
-        <!-- 4. İLETİŞİM -->
-        <a href="{{ route('contact') }}" class="hover:text-brandOrange transition">İLETİŞİM</a>
-    </div>
-
-    <div class="flex items-center gap-4">
-        @auth('admin')
-            <a href="{{ route('admin.dashboard') }}" class="hidden sm:inline-flex bg-gray-900 text-white hover:bg-brandOrange px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition">Panel</a>
-        @else
-            <a href="{{ route('admin.login') }}" class="hidden sm:inline-flex bg-gray-900 text-white hover:bg-brandOrange px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition">Admin Girişi</a>
-        @endauth
-
-        <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 text-gray-700 rounded-xl focus:outline-none">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        </button>
-    </div>
-</div>
-
-        <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-b border-gray-100 px-6 py-5 space-y-4 shadow-xl">
-    <!-- 1. ANASAYFA -->
-    <a href="{{ url('/') }}" class="block text-sm font-bold text-brandOrange">ANASAYFA</a>
-    
-    <!-- Kategorileri tek bir yerde çekiyoruz -->
-    @php
-        $menuCategories = \App\Models\Category::where('show_in_menu', true)->get();
-    @endphp
-
-    <!-- 2. KATEGORİLER (Açılır Menü) -->
-    <div>
-        <button @click="mobileCatOpen = !mobileCatOpen" type="button" class="w-full flex justify-between items-center text-xs font-extrabold text-gray-400 uppercase tracking-widest pt-2 focus:outline-none">
-            <span>KATEGORİLER</span>
-            <svg class="w-4 h-4 transition-transform duration-200" :class="mobileCatOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
-        
-        <div x-show="mobileCatOpen" x-cloak class="pl-3 mt-3 space-y-2.5 border-l-2 border-orange-100 max-h-48 overflow-y-auto">
-            <a href="{{ url('/#urunler') }}" class="block text-xs font-semibold text-gray-800">Tüm Ürünler</a>
-            @if(isset($categories))
-                @foreach($categories as $cat)
-                    <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block text-xs text-gray-600 hover:text-brandOrange transition">{{ $cat->name }}</a>
-                @endforeach
-            @endif
-        </div>
-    </div>
-    
-    <!-- 3. MENÜ KATEGORİLERİ (Doğrudan Akışta) -->
-    <div class="space-y-2 pt-1">
-        @foreach($menuCategories as $menuCat)
-            <a href="{{ url('/?category=' . $menuCat->slug . '#urunler') }}" class="block text-sm font-medium text-gray-700 hover:text-brandOrange transition">
-                {{ $menuCat->name }}
-            </a>
-        @endforeach
-    </div>
-
-    <!-- 4. İLETİŞİM -->
-    <div class="pt-2">
-        <a href="{{ route('contact') }}" class="block text-sm font-bold text-brandOrange">İLETİŞİM</a>
-    </div>
-    
-    <!-- 5. ADMIN GİRİŞİ -->
-    <div class="pt-2">
-        @auth('admin')
-            <a href="{{ route('admin.dashboard') }}" class="block text-center bg-gray-900 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider">Panel</a>
-        @else
-            <a href="{{ route('admin.login') }}" class="block text-center bg-gray-900 text-white py-3 rounded-full text-xs font-bold uppercase tracking-wider">Admin Girişi</a>
-        @endauth
-    </div>
-</div>
-    </nav>
-
+<body class="bg-white min-h-screen text-gray-900 antialiased" x-data="{ mobileMenu: false, mobileCatOpen: false }">
     <header class="bg-gray-200 text-white py-20 px-6 text-center relative overflow-hidden">
         <div class="max-w-4xl mx-auto relative z-10">
             <span class="text-brandOrange tracking-widest text-xs uppercase font-extrabold mb-3 block">Özel Koleksiyon</span>
@@ -215,9 +181,8 @@
                 </h1>
 
                 <div class="pt-4 flex items-center space-x-1">
-                    <a href="{{ $item->affiliate_url ?? '#' }}" 
-                       target="_blank" 
-                       class="bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest px-8 py-4 transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center rounded-none">
+                    <a href="{{ isset($item->category) ? route('store.index', ['category' => $item->category->slug]) . '#urunler' : '#' }}" 
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest px-8 py-4 transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center rounded-none">
                         ŞİMDİ İNCELE
                     </a>
                     <button class="bg-black/60 hover:bg-black text-white p-4 transition-colors border border-white/20 rounded-none backdrop-blur-sm">
@@ -270,14 +235,153 @@
     </div>
 
 </section>
+{{-- ÖZEL ASİMETRİK VİTRİN VE MENÜ ÖNCELİKLİ KAYDIRILAN SAĞ ALAN --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12" x-data="{ 
+    scrollSlider(direction) {
+        const container = document.getElementById('rightSlider');
+        const scrollAmount = 350;
+        if (direction === 'left') {
+            container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        } else {
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    },
+    autoPlayInterval: null,
+    startAutoPlay() {
+        const container = document.getElementById('rightSlider');
+        if (!container) return;
+        
+        // Seri kaydırma: Her 2 saniyede bir hızlı ve akıcı akış
+        this.autoPlayInterval = setInterval(() => {
+            if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+                container.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: 350, behavior: 'smooth' });
+            }
+        }, 2000); 
+    },
+    stopAutoPlay() {
+        clearInterval(this.autoPlayInterval);
+    }
+}" x-init="startAutoPlay()">
 
+    @php
+        $bannerCategories = $categories->whereNotNull('banner_image')
+            ->sortByDesc(function($cat) {
+                return $cat->is_menu ?? $cat->show_in_menu ?? $cat->is_featured ?? 0;
+            })
+            ->values();
+
+        $cat1 = $bannerCategories[0] ?? null; // Sol Büyük (Menü Öncelikli)
+        $cat2 = $bannerCategories[1] ?? null; // Sol Alt 1 (Menü Öncelikli)
+        $cat3 = $bannerCategories[2] ?? null; // Sol Alt 2 (Menü Öncelikli)
+        $rightCategories = $bannerCategories->slice(3); // Kalanlar Sağ Slider İçin
+    @endphp
+
+    @if($bannerCategories->count() > 0)
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {{-- SOL TARAF: MENÜ KATEGORİLERİ ÖNCELİKLİ SABİT BANNER'LAR --}}
+            @if($cat1)
+                <div class="lg:col-span-5 flex flex-col gap-6">
+                    
+                    {{-- 1. Resim: Sol Tarafta Büyük Banner --}}
+                    <div class="relative group h-[320px] sm:h-[380px] rounded-3xl overflow-hidden shadow-md border border-slate-200 transition-all duration-500 hover:shadow-xl">
+                        <img src="{{ asset('storage/' . $cat1->banner_image) }}" alt="{{ $cat1->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                            <span class="bg-brandOrange text-white text-[9px] font-black uppercase px-2.5 py-1 rounded-lg tracking-wider mb-2 inline-block shadow-sm w-fit">Öne Çıkan</span>
+                            <span class="text-white text-2xl sm:text-3xl font-black tracking-wide drop-shadow-md block mb-3">{{ $cat1->name }}</span>
+                            <div>
+                                <a href="{{ route('store.index', ['category' => $cat1->slug]) }}#urunler" class="inline-flex items-center gap-2 bg-white/95 hover:bg-brandOrange hover:text-white text-slate-900 px-5 py-2.5 rounded-2xl font-bold text-xs transition shadow-sm backdrop-blur-md">
+                                    <span>Ürünleri İncele</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Sol Alt Alan (2. ve 3. Resimler) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        @if($cat2)
+                            <div class="relative group h-[180px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 transition-all duration-500 hover:shadow-md">
+                                <img src="{{ asset('storage/' . $cat2->banner_image) }}" alt="{{ $cat2->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-4">
+                                    <span class="text-white text-base font-black tracking-wide truncate mb-2">{{ $cat2->name }}</span>
+                                    <a href="{{ route('store.index', ['category' => $cat2->slug]) }}#urunler" class="text-[11px] font-bold text-orange-400 hover:text-white transition flex items-center gap-1">
+                                        İncele &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($cat3)
+                            <div class="relative group h-[180px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 transition-all duration-500 hover:shadow-md">
+                                <img src="{{ asset('storage/' . $cat3->banner_image) }}" alt="{{ $cat3->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-4">
+                                    <span class="text-white text-base font-black tracking-wide truncate mb-2">{{ $cat3->name }}</span>
+                                    <a href="{{ route('store.index', ['category' => $cat3->slug]) }}#urunler" class="text-[11px] font-bold text-orange-400 hover:text-white transition flex items-center gap-1">
+                                        İncele &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
+            @endif
+
+            {{-- SAĞ TARAF: OTOMATİK KAYAN HIZLI SLIDER ALANI (Resim Üzerinde Oklar) --}}
+            <div class="lg:col-span-7 relative">
+                
+                @if($rightCategories->count() > 0)
+                    {{-- Ok Tuşları: Sağ Slider Görsellerinin Sağ Üst Katmanında --}}
+                    <div class="absolute top-4 right-6 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 shadow-lg">
+                        <button @click="scrollSlider('left')" class="w-9 h-9 rounded-xl bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center transition active:scale-95 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button @click="scrollSlider('right')" class="w-9 h-9 rounded-xl bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center transition active:scale-95 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+
+                    <div id="rightSlider" 
+                         @mouseenter="stopAutoPlay()" 
+                         @mouseleave="startAutoPlay()"
+                         class="flex gap-6 overflow-x-auto pb-4 pt-1 snap-x scroll-smooth h-full items-center [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                        
+                        @foreach($rightCategories as $category)
+                            <div class="min-w-[280px] sm:min-w-[320px] h-[320px] sm:h-[580px] relative group rounded-3xl overflow-hidden shadow-md border border-slate-200 snap-start shrink-0 transition-all duration-500 hover:shadow-xl">
+                                <img src="{{ asset('storage/' . $category->banner_image) }}" alt="{{ $category->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                                    <span class="text-[9px] text-orange-400 font-black uppercase tracking-widest block mb-1">Özel Koleksiyon</span>
+                                    <span class="text-white text-xl sm:text-2xl font-black tracking-wide drop-shadow-md block mb-4">{{ $category->name }}</span>
+                                    <div>
+                                        <a href="{{ route('store.index', ['category' => $category->slug]) }}#urunler" class="inline-flex items-center gap-2 bg-white/95 hover:bg-brandOrange hover:text-white text-slate-900 px-5 py-2.5 rounded-2xl font-bold text-xs transition shadow-sm backdrop-blur-md">
+                                            <span>Ürünleri İncele</span>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="h-full min-h-[300px] bg-slate-50 border border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                        <p class="text-sm font-bold">Sağ taraftaki slider için daha fazla kategori banneri ekleyebilirsiniz.</p>
+                    </div>
+                @endif
+            </div>
+
+        </div>
+    @endif
+</div>
 <main x-data="{ openModal: false, product: null }" class="max-w-7xl mx-auto px-3 sm:px-8 py-12">
     @if(isset($discountedProducts) && $discountedProducts->count() > 0 && !request('search') && !request('category'))
     <section class="mb-16">
         <div class="flex justify-between items-end mb-8 border-b border-gray-100 pb-4">
             <div>
                 <span class="text-xs uppercase font-bold text-red-500 tracking-widest flex items-center gap-1">
-                    🔥 Sınırlı Süre Fırsatlar
+                    Sınırlı Süre Fırsatlar
                 </span>
                 <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 mt-1">İndirimli Ürünler</h2>
             </div>
@@ -326,9 +430,9 @@
                                     'name' => $product->name,
                                     'trendyol_url' => $product->trendyol_url,
                                     'hepsiburada_url' => $product->hepsiburada_url,
-                                    'idefix_url' => $product->idefix_url,
-                                    'amazon_url' => $product->amazon_url,
-                                    'pazarama_url' => $product->pazarama_url
+                                    // 'idefix_url' => $product->idefix_url,
+                                    // 'amazon_url' => $product->amazon_url,
+                                    // 'pazarama_url' => $product->pazarama_url
                                 ]) }}"
                                 class="bg-gray-900 text-white hover:bg-red-600 text-center px-3 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition shadow-sm cursor-pointer whitespace-nowrap">
                             İncele
@@ -363,7 +467,7 @@
             </button>
 
             <div class="mb-5 pr-8">
-                <span class="text-[10px] uppercase font-bold tracking-widest text-brandOrange">Platform Seçimi</span>
+                <span class="text-[10px] uppercase font-bold tracking-widest text-brandOrange">Alışverişe Devam Et</span>
                 <h3 class="text-xl font-black text-gray-900 mt-0.5" x-text="product?.name"></h3>
                 <p class="text-xs text-gray-500 mt-1">Alışverişinize devam etmek istediğiniz platformu seçin:</p>
             </div>
@@ -387,7 +491,7 @@
                     </a>
                 </template>
 
-                <template x-if="product?.idefix_url">
+                <!-- <template x-if="product?.idefix_url">
                     <a :href="product.idefix_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-bold transition group">
                         <span class="flex items-center gap-2.5 text-sm">
                             <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> İdefix
@@ -412,7 +516,7 @@
                         </span>
                         <svg class="w-4 h-4 text-red-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </a>
-                </template>
+                </template> -->
             </div>
 
             <div class="mt-5 text-center border-t border-gray-100 pt-4">
@@ -453,183 +557,215 @@
     </div>
 </section>
 
-<main x-data="{ openModal: false, product: null }" class="max-w-7xl mx-auto px-3 sm:px-8 py-16">
-        <div id="urunler" class="scroll-mt-24">
-            <span class="text-xs uppercase font-bold text-gray-400 tracking-widest">Koleksiyon</span>
-            <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 mt-1">Ürünler</h2>
-        </div>
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-10 mt-6">
-        @forelse($products as $product)
-            <div class="group flex flex-col justify-between bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                <div>
-                    <div class="h-64 sm:h-96 bg-gray-100 relative overflow-hidden rounded-2xl mb-4 sm:mb-5 shadow-sm" x-data="{ active: 0, images: {{ json_encode($product->images ?? []) }} }">
-                        @if($product->images && count($product->images) > 0)
-                            <template x-for="(img, idx) in images" :key="idx">
-                                <div x-show="active === idx" class="absolute inset-0 w-full h-full transition-opacity duration-500">
-                                    <img :src="'{{ asset('') }}' + img" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">
-                                </div>
-                            </template>
-
-                            @if(count($product->images) > 1)
-                                <button @click.prevent="active = (active === 0) ? images.length - 1 : active - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
-                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                                </button>
-                                <button @click.prevent="active = (active === images.length - 1) ? 0 : active + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
-                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-                                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1 z-10 bg-black/30 backdrop-blur-md px-2 py-1 rounded-full">
-                                    <template x-for="(img, idx) in images" :key="idx">
-                                        <button @click.prevent="active = idx" :class="active === idx ? 'bg-white w-3' : 'bg-white/50 w-1'" class="h-1 rounded-full transition-all duration-300 focus:outline-none"></button>
-                                    </template>
-                                </div>
-                            @endif
-                        @else
-                            <div class="flex items-center justify-center h-full text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
-                                Görsel Yok
-                            </div>
-                        @endif
-
-                        @if($product->category)
-                            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-gray-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm z-10">
-                                {{ $product->category->name }}
-                            </span>
-                        @endif
-                    </div>
-
-                    <div class="px-1">
-                        <h2 class="font-bold text-gray-900 text-sm sm:text-lg mb-1 group-hover:text-brandOrange transition line-clamp-1">{{ $product->name }}</h2>
-                        <p class="text-gray-500 text-[11px] sm:text-xs line-clamp-2 mb-3 leading-relaxed font-light hidden sm:block">{{ $product->description ?? 'Özel tasarım ve yüksek kalite.' }}</p>
-                    </div>
-                </div>
-
-                <div class="px-1 flex flex-col sm:flex-row sm:items-center justify-between pt-2 sm:pt-3 border-t border-gray-100 mt-2 gap-2">
-                    <div>
-                        @if($product->discount_price && $product->price > 0)
-                            @php
-                                $discountPercent = round((($product->price - $product->discount_price) / $product->price) * 100);
-                            @endphp
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-base sm:text-xl font-black text-gray-900">{{ number_format($product->discount_price, 2) }} ₺</span>
-                                <span class="text-xs text-gray-400 line-through">{{ number_format($product->price, 2) }} ₺</span>
-                            </div>
-                            <div class="flex items-center gap-1 mt-0.5">
-                                <span class="bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider">
-                                    -%{{ $discountPercent }}
-                                </span>
-                                <span class="text-[10px] text-gray-400 uppercase tracking-wider hidden sm:inline">| Stok: <span class="font-semibold text-gray-700">{{ $product->stock }}</span></span>
-                            </div>
-                        @else
-                            <span class="text-base sm:text-xl font-black text-gray-900 block">{{ number_format($product->price, 2) }} ₺</span>
-                            <span class="text-[10px] text-gray-400 uppercase tracking-wider hidden sm:block">Stok: <span class="font-semibold text-gray-700">{{ $product->stock }}</span></span>
-                        @endif
-                    </div>
-                    
-                    <button @click="openModal = true; product = JSON.parse($el.getAttribute('data-product'))"
-                            data-product="{{ json_encode([
-                                'name' => $product->name,
-                                'trendyol_url' => $product->trendyol_url,
-                                'hepsiburada_url' => $product->hepsiburada_url,
-                                'idefix_url' => $product->idefix_url,
-                                'amazon_url' => $product->amazon_url,
-                                'pazarama_url' => $product->pazarama_url
-                            ]) }}"
-                            class="bg-gray-900 text-white hover:bg-red-600 text-center px-3 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition shadow-sm cursor-pointer whitespace-nowrap">
-                        İncele
-                    </button>
-                </div>
-            </div>
-        @empty
-            <div class="col-span-full text-center py-24 text-gray-400">
-                <p class="text-base font-medium">Bu kategoride henüz ürün sergilenmiyor.</p>
-            </div>
-        @endforelse
+<main x-data="{ openModal: false, product: null }" class="max-w-7xl mx-auto px-3 sm:px-8 py-16 relative overflow-hidden" id="special-collection-area">
+   <div id="urunler" class="scroll-mt-24">
+        <span class="text-xs uppercase font-bold text-gray-400 tracking-widest">Koleksiyon</span>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 mt-1">Ürünler</h2>
     </div>
+
+    @php
+        $activeCategory = null;
+        if(request('category')) {
+            $activeCategory = \App\Models\Category::where('slug', request('category'))->first();
+        }
+    @endphp
+
+    @if($activeCategory && $activeCategory->banner_image)
+        <div class="relative w-full h-64 sm:h-80 rounded-3xl overflow-hidden mb-8 mt-6 shadow-sm">
+            <img src="{{ asset('storage/' . $activeCategory->banner_image) }}" alt="{{ $activeCategory->name }}" class="w-full h-full object-cover">
+            
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-10">
+                <span class="text-brandOrange text-xs font-bold uppercase tracking-wider mb-1">ALVERAL</span>
+                <h1 class="text-3xl sm:text-5xl font-black text-white">{{ $activeCategory->name }}</h1>
+            </div>
+        </div>
+    @endif
+
+<div class="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 mt-6">
+    @forelse($products as $product)
+        @php
+            $isSpecialCategory = $activeCategory && $activeCategory->show_in_menu;
+        @endphp
+
+        <div class="group flex flex-col justify-between bg-white rounded-2xl p-4 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden
+    {{ $isSpecialCategory 
+        ? 'border-2 border-orange-400 shadow-[0_0_25px_rgba(249,115,22,0.5)] ring-4 ring-orange-400/20' 
+        : 'border border-slate-100 shadow-sm hover:shadow-2xl hover:border-brandOrange/50' }}"
+    @if($isSpecialCategory) style="animation: specialBoxPulse 2.5s infinite ease-in-out;" @endif>
+            
+            @if($isSpecialCategory)
+                <div class="absolute -inset-px bg-gradient-to-r from-orange-500 via-amber-400 to-red-500 rounded-2xl opacity-30 blur-sm group-hover:opacity-75 transition duration-500 pointer-events-none -z-10"></div>
+                
+                <div class="absolute -right-12 top-6 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[9px] font-black uppercase tracking-widest py-1 px-12 rotate-45 shadow-lg z-20 flex items-center justify-center gap-1">
+                    ⚡ FIRSAT
+                </div>
+            @endif
+
+            <div>
+                <div class="h-64 sm:h-96 bg-gray-100 relative overflow-hidden rounded-2xl mb-4 sm:mb-5 shadow-sm" x-data="{ active: 0, images: {{ json_encode($product->images ?? []) }} }">
+                    @if($product->images && count($product->images) > 0)
+                        <template x-for="(img, idx) in images" :key="idx">
+                            <div x-show="active === idx" class="absolute inset-0 w-full h-full transition-opacity duration-500">
+                                <img :src="'{{ asset('') }}' + img" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">
+                            </div>
+                        </template>
+
+                        @if(count($product->images) > 1)
+                            <button @click.prevent="active = (active === 0) ? images.length - 1 : active - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            <button @click.prevent="active = (active === images.length - 1) ? 0 : active + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1 z-10 bg-black/30 backdrop-blur-md px-2 py-1 rounded-full">
+                                <template x-for="(img, idx) in images" :key="idx">
+                                    <button @click.prevent="active = idx" :class="active === idx ? 'bg-white w-3' : 'bg-white/50 w-1'" class="h-1 rounded-full transition-all duration-300 focus:outline-none"></button>
+                                </template>
+                            </div>
+                        @endif
+                    @else
+                        <div class="flex items-center justify-center h-full text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
+                            Görsel Yok
+                        </div>
+                    @endif
+
+                    @if($product->category)
+                        <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-gray-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm z-10">
+                            {{ $product->category->name }}
+                        </span>
+                    @endif
+                </div>
+
+                <div class="px-1">
+                    <h2 class="font-bold text-gray-900 text-sm sm:text-lg mb-1 group-hover:text-orange-500 transition line-clamp-1">{{ $product->name }}</h2>
+                    <p class="text-gray-500 text-[11px] sm:text-xs line-clamp-2 mb-3 leading-relaxed font-light hidden sm:block">{{ $product->description ?? 'Özel tasarım ve yüksek kalite.' }}</p>
+                </div>
+            </div>
+
+            <div class="px-1 flex flex-col sm:flex-row sm:items-center justify-between pt-2 sm:pt-3 border-t border-gray-100 mt-2 gap-2">
+                <div>
+                    @if($product->discount_price && $product->price > 0)
+                        @php
+                            $discountPercent = round((($product->price - $product->discount_price) / $product->price) * 100);
+                        @endphp
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-base sm:text-xl font-black text-gray-900">{{ number_format($product->discount_price, 2) }} ₺</span>
+                            <span class="text-xs text-gray-400 line-through">{{ number_format($product->price, 2) }} ₺</span>
+                        </div>
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <span class="bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider animate-bounce">
+                                -%{{ $discountPercent }}
+                            </span>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wider hidden sm:inline">| Stok: <span class="font-semibold text-gray-700">{{ $product->stock }}</span></span>
+                        </div>
+                    @else
+                        <span class="text-base sm:text-xl font-black text-gray-900 block">{{ number_format($product->price, 2) }} ₺</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider hidden sm:block">Stok: <span class="font-semibold text-gray-700">{{ $product->stock }}</span></span>
+                    @endif
+                </div>
+                
+                <button @click="openModal = true; product = JSON.parse($el.getAttribute('data-product'))"
+                        data-product="{{ json_encode([
+                            'name' => $product->name,
+                            'trendyol_url' => $product->trendyol_url,
+                            'hepsiburada_url' => $product->hepsiburada_url,
+                            //'idefix_url' => $product->idefix_url,
+                            //'amazon_url' => $product->amazon_url,
+                            //'pazarama_url' => $product->pazarama_url
+                        ]) }}"
+                        class="text-white text-center px-4 py-2.5 rounded-xl text-[11px] sm:text-xs font-black uppercase tracking-wider transition shadow-md cursor-pointer whitespace-nowrap hover:scale-105 active:scale-95 duration-200
+                        {{ $isSpecialCategory ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-orange-500/40 animate-pulse' : 'bg-gray-900 hover:bg-brandOrange' }}">
+                    İncele
+                </button>
+            </div>
+        </div>
+    @empty
+        <div class="col-span-full text-center py-24 text-gray-400">
+            <p class="text-base font-medium">Bu kategoride henüz ürün sergilenmiyor.</p>
+        </div>
+    @endforelse
+</div>
 
     <div class="mt-16">
         {{ $products->links() }}
     </div>
 
-  <div x-show="openModal" 
-     x-cloak
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity"
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0">
-    
-    <div @click.away="openModal = false" 
-         class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden transform transition-all"
+    {{-- Modal Kodları --}}
+    <div x-show="openModal" 
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity"
          x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-95"
-         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-95">
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
         
-        <button @click="openModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition cursor-pointer">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        <div @click.away="openModal = false" 
+             class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative overflow-hidden transform transition-all">
+            
+            <button @click="openModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
 
-        <div class="mb-5 pr-8">
-            <span class="text-[10px] uppercase font-bold tracking-widest text-brandOrange">Platform Seçimi</span>
-            <h3 class="text-xl font-black text-gray-900 mt-0.5" x-text="product?.name"></h3>
-            <p class="text-xs text-gray-500 mt-1">Alışverişinize devam etmek istediğiniz platformu seçin:</p>
-        </div>
+            <div class="mb-5 pr-8">
+                <span class="text-[10px] uppercase font-bold tracking-widest text-brandOrange">Alışverişe Devam Et</span>
+                <h3 class="text-xl font-black text-gray-900 mt-0.5" x-text="product?.name"></h3>
+                <p class="text-xs text-gray-500 mt-1">Alışverişinize devam etmek istediğiniz platformu seçin:</p>
+            </div>
 
-        <div class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
-            <template x-if="product?.trendyol_url">
-                <a :href="product.trendyol_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-900 font-bold transition group">
-                    <span class="flex items-center gap-2.5 text-sm">
-                        <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> Trendyol
-                    </span>
-                    <svg class="w-4 h-4 text-orange-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </template>
+            <div class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+                <template x-if="product?.trendyol_url">
+                    <a :href="product.trendyol_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-900 font-bold transition group">
+                        <span class="flex items-center gap-2.5 text-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> Trendyol
+                        </span>
+                        <svg class="w-4 h-4 text-orange-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </template>
 
-            <template x-if="product?.hepsiburada_url">
-                <a :href="product.hepsiburada_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold transition group">
-                    <span class="flex items-center gap-2.5 text-sm">
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hepsiburada
-                    </span>
-                    <svg class="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </template>
+                <template x-if="product?.hepsiburada_url">
+                    <a :href="product.hepsiburada_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold transition group">
+                        <span class="flex items-center gap-2.5 text-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hepsiburada
+                        </span>
+                        <svg class="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </template>
 
-            <template x-if="product?.idefix_url">
-                <a :href="product.idefix_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-bold transition group">
-                    <span class="flex items-center gap-2.5 text-sm">
-                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> İdefix
-                    </span>
-                    <svg class="w-4 h-4 text-blue-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </template>
+                <!-- <template x-if="product?.idefix_url">
+                    <a :href="product.idefix_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-bold transition group">
+                        <span class="flex items-center gap-2.5 text-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> İdefix
+                        </span>
+                        <svg class="w-4 h-4 text-blue-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </template>
 
-            <template x-if="product?.amazon_url">
-                <a :href="product.amazon_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-yellow-900 font-bold transition group">
-                    <span class="flex items-center gap-2.5 text-sm">
-                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> Amazon
-                    </span>
-                    <svg class="w-4 h-4 text-yellow-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </template>
+                <template x-if="product?.amazon_url">
+                    <a :href="product.amazon_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-yellow-900 font-bold transition group">
+                        <span class="flex items-center gap-2.5 text-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> Amazon
+                        </span>
+                        <svg class="w-4 h-4 text-yellow-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </template>
 
-            <template x-if="product?.pazarama_url">
-                <a :href="product.pazarama_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 font-bold transition group">
-                    <span class="flex items-center gap-2.5 text-sm">
-                        <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Pazarama
-                    </span>
-                    <svg class="w-4 h-4 text-red-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-            </template>
-        </div>
+                <template x-if="product?.pazarama_url">
+                    <a :href="product.pazarama_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 font-bold transition group">
+                        <span class="flex items-center gap-2.5 text-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Pazarama
+                        </span>
+                        <svg class="w-4 h-4 text-red-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </template> -->
+            </div>
 
-        <div class="mt-5 text-center border-t border-gray-100 pt-4">
-            <span class="text-[11px] text-gray-400">Güvenli ve hızlı yönlendirme ile en avantajlı fiyatı yakalayın.</span>
+            <div class="mt-5 text-center border-t border-gray-100 pt-4">
+                <span class="text-[11px] text-gray-400">Güvenli ve hızlı yönlendirme ile en avantajlı fiyatı yakalayın.</span>
+            </div>
         </div>
     </div>
-</div>
 </main>
 
     <section class="max-w-7xl mx-auto px-4 sm:px-8 -mt-8 relative z-30">
@@ -870,33 +1006,35 @@
     const container = document.createElement('div');
     container.className = 'ai-chat-container';
     container.innerHTML = `
-        <div class="ai-chat-box" id="aiChatBox">
-            <div class="ai-chat-header">
-                <span style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                    <span style="width: 20px; height: 20px; display: inline-flex; align-items: center;">${robotSvg}</span>
-                    Alveral Asistan
-                </span>
-                <button class="ai-close-btn" id="aiCloseBtn">&times;</button>
-            </div>
-            
-            <!-- Hazır Hızlı Soru Butonları (Kaydırılabilir & Esnek) -->
-            <div class="ai-quick-questions">
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('En çok satan ürünler neler?')">🔥 En Çok Satanlar</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Ne önerirsin, en iyi ürün hangisi?')">⭐ Ne Önerirsin?</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Hangi kargo şirketiyle çalışıyorsunuz?')">🚚 Kargo & Sipariş</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Siz kimsiniz?')">🏬 Alveral Kimdir?</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Instagram adresiniz ne?')">📸 Instagram</button>
-            </div>
+<div class="ai-chat-box" id="aiChatBox">
+    <div class="ai-chat-header">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+            <span style="width: 20px; height: 20px; display: inline-flex; align-items: center;">${robotSvg}</span>
+            Alveral Asistan
+        </span>
+        <button class="ai-close-btn" id="aiCloseBtn">&times;</button>
+    </div>
+    
+    <!-- Hazır Hızlı Soru Butonları (Kaydırılabilir & Esnek) -->
+    <div class="ai-quick-questions">
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('En çok satan ürünler neler?')">🔥 En Çok Satanlar</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Ne önerirsin, en iyi ürün hangisi?')">⭐ Ne Önerirsin?</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Hangi kargo şirketiyle çalışıyorsunuz?')">🚚 Kargo & Sipariş</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Siz kimsiniz?')">🏬 Alveral Kimdir?</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Instagram adresiniz ne?')">📸 Instagram (@alveral.tr)</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Facebook sayfanız var mı?')">📘 Facebook (Alveral)</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('TikTok hesabınız var mı?')">🎵 TikTok (@alveral.tr)</button>
+    </div>
 
-            <div class="ai-chat-body" id="aiChatBody">
-                <p class="ai-message">Merhaba! Ben Alveral Yapay Zeka Asistanıyım. Size en uygun ürünü bulmak veya sorularınızı yanıtlamak için buradayım! 🤖</p>
-            </div>
+    <div class="ai-chat-body" id="aiChatBody">
+        <p class="ai-message">Merhaba! Ben Alveral Yapay Zeka Asistanıyım. Size en uygun ürünü bulmak veya sorularınızı yanıtlamak için buradayım! 🤖</p>
+    </div>
 
-            <div class="ai-chat-footer">
-                <input type="text" placeholder="Ürün veya kategori sorun..." id="aiInput">
-                <button id="aiSendBtn">Gönder</button>
-            </div>
-        </div>
+    <div class="ai-chat-footer">
+        <input type="text" placeholder="Ürün veya kategori sorun..." id="aiInput">
+        <button id="aiSendBtn">Gönder</button>
+    </div>
+</div>
         <button class="ai-float-btn" id="aiToggleBtn" title="AI Asistan">
             ${robotSvg}
         </button>
@@ -951,7 +1089,7 @@
             return "En popüler ürünlerimizi doğrudan sayfamızdaki **'En Çok Satanlar'** bölümünden inceleyebilirsiniz! 🚀";
         } 
         else if (text.includes('kargo') || text.includes('teslimat') || text.includes('sipariş')) {
-            return "Ürünlerimiz ulusal satış platformlarına (Trendyol, Amazon, Hepsiburada vb.) yönlendirilmektedir. Dilediğiniz güvenli platform üzerinden siparişinizi gönül rahatlığıyla oluşturabilirsiniz! 🚚✨";
+            return "Ürünlerimiz ulusal satış platformlarına (Trendyol, Hepsiburada vb.) yönlendirilmektedir. Dilediğiniz güvenli platform üzerinden siparişinizi gönül rahatlığıyla oluşturabilirsiniz! 🚚✨";
         }
         else if (text.includes('indirim yap') || text.includes('pazarlık')) {
             return "Canın sağ olsun! Pazar yerlerindeki en cömert kampanyaları yakalaman için buradayım, sepeti doldur indirimler seni bekliyor 😉🔥";
@@ -967,6 +1105,12 @@
         }
         else if (text.includes('instagram') || text.includes('sosyal medya')) {
             return "Özel sürprizler, yeni koleksiyonlar ve güncel paylaşımlar için bizi Instagram'da **@alveral.tr** hesabımızdan takip edebilirsiniz! 📸";
+        }
+        else if (text.includes('facebook') || text.includes('sosyal medya')) {
+            return "Özel sürprizler, yeni koleksiyonlar ve güncel paylaşımlar için bizi facebook'da **@alveral** hesabımızdan takip edebilirsiniz! 📸";
+        }
+        else if (text.includes('tiktok') || text.includes('sosyal medya')) {
+            return "Özel sürprizler, yeni koleksiyonlar ve güncel paylaşımlar için bizi tiktok'da **@alveral.tr** hesabımızdan takip edebilirsiniz! 📸";
         }
         else if (text.includes('iade') || text.includes('değişim')) {
             return "Siparişinizi hangi pazar yerinden oluşturduysanız, o platformun kolay iade ve değişim koşulları geçerlidir. Hiçbir sorun yaşamadan işlemlerinizi gerçekleştirebilirsiniz! 🔄";
@@ -1020,7 +1164,7 @@
     </div>
 
     
-    <div class="bg-white border border-slate-100 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-sm hover:shadow-lg hover:scale-105 transition duration-300 w-[calc(50%-8px)] sm:w-52 h-24 sm:h-32 flex items-center justify-center">
+    <!-- <div class="bg-white border border-slate-100 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-sm hover:shadow-lg hover:scale-105 transition duration-300 w-[calc(50%-8px)] sm:w-52 h-24 sm:h-32 flex items-center justify-center">
         <img src="{{ asset('img/reference/idefix.png') }}" alt="idefix Mağazamız" class="max-h-12 sm:max-h-16 object-contain">
     </div>
 
@@ -1032,7 +1176,7 @@
     
     <div class="bg-white border border-slate-100 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-sm hover:shadow-lg hover:scale-105 transition duration-300 w-[calc(50%-8px)] sm:w-52 h-24 sm:h-32 flex items-center justify-center">
         <img src="{{ asset('img/reference/pazarama.png') }}" alt="pazarama Mağazamız" class="max-h-12 sm:max-h-16 object-contain">
-    </div>
+    </div> -->
 </div>
 </section>
 
@@ -1066,65 +1210,6 @@
         });
     });
 </script>
-
-
-
-<footer id="iletisim" class="bg-gray-900 text-white py-16 px-6 mt-24">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 text-sm">
-        
-        <div>
-            <img src="{{ asset('img/logo/logo.png') }}" alt="Alveral" class="h-12 w-auto mb-4 brightness-120">
-            <p class="text-gray-400 font-light leading-relaxed">
-                30 yılı aşkın tecrübemizle özenle seçilmiş ürünleri ve en avantajlı fırsatları modern vitrin konseptiyle buluşturuyoruz.
-            </p>
-        </div>
-
-        <div>
-            <h3 class="font-bold text-xs uppercase tracking-widest mb-4 text-white">Keşfet</h3>
-            <ul class="space-y-2.5 text-gray-400 font-light">
-                <li>
-                    <a href="{{ url('/') }}" class="hover:text-white transition">Anasayfa</a>
-                </li>
-                <li>
-                    <a href="{{ route('contact') }}" class="hover:text-white transition">İletişim</a>
-                </li>
-
-                @auth('admin')
-                    <li class="pt-2 border-t border-gray-800">
-                        <a href="{{ route('admin.dashboard') }}" class="text-brandOrange hover:text-orange-400 font-bold transition flex items-center gap-1.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span>Yönetim Paneli</span>
-                        </a>
-                    </li>
-                @endauth
-            </ul>
-        </div>
-
-        <div>
-            <h3 class="font-bold text-xs uppercase tracking-widest mb-4 text-white">Sosyal Medya Hesaplarımız</h3>
-                <li>
-                    <a href="https://www.instagram.com/alveral.tr/" target="_blank" class="hover:text-white transition flex items-center gap-2 group">
-                        <svg class="w-4 h-4 text-brandOrange group-hover:scale-110 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-                        </svg>
-                        <span>Instagram (@alveral.tr)</span>
-                    </a>
-                </li>
-        </div>
-
-    </div>
-
-
-    <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col items-center justify-center text-center text-sm text-gray-400 font-light">
-        <p>© {{ date('Y') }} Alveral. Tüm hakları saklıdır.</p>
-        <a href="https://edaoncel.github.io/edaoncell/project.html" target="_blank" rel="noopener noreferrer" class="mt-4 hover:text-white transition duration-300 flex items-center gap-2 group">
-            <span class="text-gray-300">Alveral Tasarım & Geliştirme:</span>
-            <span class="font-bold text-white underline underline-offset-4 decoration-brandOrange group-hover:text-brandOrange transition tracking-wider">Eda Öncel</span>
-        </a>
-    </div>
-</footer>
-
 </body>
 </html>
+@endsection

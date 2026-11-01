@@ -64,6 +64,19 @@
                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Yeni Kapak Görseli Seç (İsteğe bağlı)</label>
                 <input type="file" name="image" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brandOrange file:text-white hover:file:bg-orange-600 transition">
             </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Banner Fotoğrafı (Geniş Üst Görsel)</label>
+                
+                {{-- Mevcut banner varsa önizlemesi --}}
+                @if($category->banner_image)
+                    <div class="mb-2">
+                        <img src="{{ asset('storage/' . $category->banner_image) }}" alt="Mevcut Banner" class="w-32 h-16 object-cover rounded-xl border border-slate-200">
+                    </div>
+                @endif
+
+                <input type="file" name="banner_image" accept="image/*" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100">
+                <span class="text-xs text-slate-400 mt-1 block">Yeni banner seçerseniz eskisi silinip yerine bu yüklenecektir.</span>
+            </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <a href="{{ route('admin.categories.index') }}" class="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition">İptal</a>

@@ -101,66 +101,133 @@
 
     </div>
 
-    <div class="bg-white border border-slate-200 p-6 sm:p-10 rounded-3xl shadow-sm mt-6">
-        <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-            <div>
-                <span class="text-[10px] text-brandOrange font-black uppercase tracking-widest">Görsel Analiz</span>
-                <h3 class="text-xl font-black text-gray-900 mt-0.5">Kategori Halka Grafiği</h3>
-            </div>
-            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Canlı Dağılım</span>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    
+    {{-- 1. GRAFİK: TÜM KATEGORİLERİN DAĞILIMI --}}
+<div class="bg-white border border-slate-200 p-6 sm:p-8 rounded-3xl shadow-sm">
+    <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+        <div>
+            <span class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Genel Dağılım</span>
+            <h3 class="text-lg font-black text-gray-900 mt-0.5">Tüm Kategoriler</h3>
         </div>
+        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">ALVERAL</span>
+    </div>
 
-        @if(isset($categories) && count($categories) > 0)
-            @php
-                $colors = ['#ff6600', '#3b82f6', '#8b5cf6', '#10b981', '#f43f5e', '#f59e0b', '#6366f1', '#06b6d4'];
-                $totalProd = $categories->sum('products_count');
-                $currentDegree = 0;
-                $gradientStops = [];
+    @if(isset($categories) && count($categories) > 0)
+        @php
+            $generalColors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#6366f1', '#14b8a6', '#d946ef'];
+            
+            // products_count gelmese bile ilişki üzerinden güvenle sayar
+            $totalGeneralProd = $categories->sum(function($cat) {
+                return $cat->products_count ?? $cat->products->count();
+            });
 
-                if ($totalProd > 0) {
-                    foreach($categories as $index => $cat) {
-                        $count = $cat->products_count ?? 0;
-                        $angle = ($count / $totalProd) * 360;
-                        $nextDegree = $currentDegree + $angle;
-                        $color = $colors[$index % count($colors)];
-                        $gradientStops[] = "{$color} {$currentDegree}deg {$nextDegree}deg";
-                        $currentDegree = $nextDegree;
+            $generalCurrentDegree = 0;
+            $generalGradientStops = [];
+
+            if ($totalGeneralProd > 0) {
+                foreach($categories as $index => $cat) {
+                    $count = $cat->products_count ?? $cat->products->count();
+                    if ($count > 0) {
+                        $angle = ($count / $totalGeneralProd) * 360;
+                        $nextDegree = $generalCurrentDegree + $angle;
+                        $color = $generalColors[$index % count($generalColors)];
+                        $generalGradientStops[] = "{$color} {$generalCurrentDegree}deg {$nextDegree}deg";
+                        $generalCurrentDegree = $nextDegree;
                     }
                 }
-                $gradientString = count($gradientStops) > 0 ? implode(', ', $gradientStops) : '#e2e8f0 0deg 360deg';
-            @endphp
+            }
+            $generalGradientString = count($generalGradientStops) > 0 ? implode(', ', $generalGradientStops) : '#e2e8f0 0deg 360deg';
+        @endphp
 
-            <div class="flex flex-col md:flex-row items-center justify-center gap-8 py-4">
-                <div class="relative w-52 h-52 rounded-full shadow-inner shrink-0" style="background: conic-gradient({{ $gradientString }});">
-                    <div class="absolute inset-8 bg-white rounded-full flex flex-col items-center justify-center shadow-sm">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Toplam Ürün</span>
-                        <span class="text-2xl font-black text-gray-900">{{ $totalProd }}</span>
-                    </div>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
+            {{-- Grafik (Halka Tasarımı) --}}
+            <div class="relative w-44 h-44 rounded-full shadow-inner shrink-0" style="background: conic-gradient({{ $generalGradientString }});">
+                <div class="absolute inset-7 bg-white rounded-full flex flex-col items-center justify-center shadow-sm">
+                    <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Toplam Ürün</span>
+                    <span class="text-xl font-black text-slate-800">{{ $totalGeneralProd }}</span>
                 </div>
+            </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
-                    @foreach($categories as $index => $cat)
-                        @php
-                            $pCount = $cat->products_count ?? 0;
-                            $pct = $totalProd > 0 ? round(($pCount / $totalProd) * 100, 1) : 0;
-                            $dotColor = $colors[$index % count($colors)];
-                        @endphp
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                            <div class="flex items-center gap-2.5 overflow-hidden">
-                                <span class="w-3 h-3 rounded-full shrink-0" style="background-color: {{ $dotColor }};"></span>
-                                <span class="text-xs font-bold text-slate-700 truncate">{{ $cat->name }}</span>
-                            </div>
-                            <span class="text-xs font-black text-slate-500 shrink-0 ml-2">%{{ $pct }} <span class="text-[10px] text-slate-400 font-normal">({{ $pCount }})</span></span>
+            {{-- Kategori Listesi ve Renk Göstergeleri --}}
+            <div class="flex flex-col gap-2 w-full max-h-48 overflow-y-auto pr-1">
+                @foreach($categories as $index => $cat)
+                    @php
+                        $pCount = $cat->products_count ?? $cat->products->count();
+                        $pct = $totalGeneralProd > 0 ? round(($pCount / $totalGeneralProd) * 100, 1) : 0;
+                        $dotColor = $generalColors[$index % count($generalColors)];
+                    @endphp
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/70 border border-slate-100">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $dotColor }};"></span>
+                            <span class="text-xs font-bold text-slate-700 truncate">{{ $cat->name }}</span>
                         </div>
-                    @endforeach
+                        <span class="text-xs font-black text-slate-900 shrink-0 ml-2">%{{ $pct }} <span class="text-[10px] text-slate-400 font-normal">({{ $pCount }})</span></span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @else
+        <div class="text-center py-8 text-slate-400 text-sm">Sistemde kayıtlı kategori bulunamadı.</div>
+    @endif
+</div>
+
+
+    {{-- 2. GRAFİK: SADECE MENÜDE GÖSTERİLEN ÖZEL KATEGORİLER --}}
+{{-- 2. KART: MENÜDEKİ ÖZEL KATEGORİLER (Modern Grid Kart Tasarımı) --}}
+<div class="bg-white border border-slate-200 p-6 sm:p-8 rounded-3xl shadow-sm">
+    <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+        <div>
+            <span class="text-[10px] text-brandOrange font-black uppercase tracking-widest">Özel Koleksiyonlar</span>
+            <h3 class="text-lg font-black text-gray-900 mt-0.5">Menüdeki Kategoriler</h3>
+        </div>
+        <span class="text-xs text-brandOrange font-bold uppercase tracking-wider">ALVERAL</span>
+    </div>
+
+    @if(isset($specialCategories) && count($specialCategories) > 0)
+        @php
+            $totalSpecialProd = $specialCategories->sum(function($cat) {
+                return $cat->products_count ?? $cat->products->count();
+            });
+        @endphp
+
+        <div class="flex flex-col gap-4 py-2">
+            {{-- Üst Bilgi Banner'ı --}}
+            <div class="flex items-center justify-between bg-gradient-to-r from-orange-500 to-amber-500 text-white px-5 py-3.5 rounded-2xl shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider opacity-90 block">Aktif Vitrin</span>
+                    <span class="text-sm font-black">Özel Koleksiyon Dağılımı</span>
+                </div>
+                <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-black">
+                    {{ $totalSpecialProd }} Ürün
                 </div>
             </div>
-        @else
-            <div class="text-center py-8 text-slate-400 text-sm">
-                Grafik oluşturulacak kategori verisi bulunamadı.
+
+            {{-- Kategoriler için Grid (Kutucuk) Yapısı --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto pr-1">
+                @foreach($specialCategories as $cat)
+                    @php
+                        $pCount = $cat->products_count ?? $cat->products->count();
+                        $pct = $totalSpecialProd > 0 ? round(($pCount / $totalSpecialProd) * 100, 1) : 0;
+                    @endphp
+                    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-orange-200 transition-all group">
+                        <div class="flex flex-col gap-0.5 overflow-hidden pr-2">
+                            <span class="text-xs font-bold text-slate-800 truncate group-hover:text-brandOrange transition-colors">{{ $cat->name }}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">%{{ $pct }} oran</span>
+                        </div>
+                        <div class="w-9 h-9 rounded-xl bg-orange-100/70 text-brandOrange flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
+                            {{ $pCount }}
+                        </div>
+                    </div>
+                @endforeach
             </div>
-        @endif
-    </div>
+        </div>
+    @else
+        <div class="text-center py-8 text-slate-400 text-sm">Menüde gösterilen özel kategori bulunamadı.</div>
+    @endif
+</div>
+
+</div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         

@@ -10,11 +10,11 @@ use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\MarketplaceController;
+use App\Http\Controllers\KvkkController;
 
-// Yönetim Paneli Rotaları (Admin Mimarisine Göre)
+Route::get('/kvkk', [KvkkController::class, 'kvkk'])->name('kvkk.terms');
 Route::prefix('yonetim')->name('admin.')->middleware(['web', 'auth:admin'])->group(function () {
-    
-    // Pazar Yeri / Alveral Entegrasyon Rotaları
+
     Route::prefix('marketplaces')->name('marketplaces.')->group(function () {
         Route::get('/settings', [MarketplaceController::class, 'settings'])->name('settings');
         Route::post('/settings/{marketplace}', [MarketplaceController::class, 'updateSettings'])->name('settings.update');

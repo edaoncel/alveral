@@ -129,7 +129,7 @@
                                     @if($product->hepsiburada_url)
                                         <a href="{{ $product->hepsiburada_url }}" target="_blank" class="bg-amber-100 text-amber-700 hover:bg-amber-200 text-[10px] font-bold px-2 py-0.5 rounded transition">Hepsiburada</a>
                                     @endif
-                                    @if($product->idefix_url)
+                                    <!-- @if($product->idefix_url)
                                         <a href="{{ $product->idefix_url }}" target="_blank" class="bg-blue-100 text-blue-700 hover:bg-blue-200 text-[10px] font-bold px-2 py-0.5 rounded transition">İdefix</a>
                                     @endif
                                     @if($product->amazon_url)
@@ -140,7 +140,7 @@
                                     @endif
                                     @if(!$product->trendyol_url && !$product->hepsiburada_url && !$product->idefix_url && !$product->amazon_url && !$product->pazarama_url)
                                         <span class="text-xs text-slate-400 italic">Link eklenmemiş</span>
-                                    @endif
+                                    @endif -->
                                 </div>
                             </td>
                             <td class="py-4 px-4 text-center whitespace-nowrap">

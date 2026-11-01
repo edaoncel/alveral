@@ -19,7 +19,7 @@ class MarketplaceController extends Controller
 // Pazaryeri Ayarlarını ve API Bilgilerini Günceller
     public function updateMargin(Request $request)
     {
-        $pazaryeri = $request->input('pazaryeri'); // trendyol, hepsiburada, amazon
+        $pazaryeri = $request->input('pazaryeri');
         $yeni_kar = floatval($request->input('varsayilan_kar', 26));
         $aktif = $request->has('aktif') ? true : false;
         

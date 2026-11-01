@@ -7,7 +7,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
-    protected $fillable = ['name', 'slug', 'image', 'show_in_menu'];
+    protected $fillable = [
+        'name', 
+        'slug', 
+        'image', 
+        'banner_image',
+        'show_in_menu'
+    ];
 
     public function products()
     {

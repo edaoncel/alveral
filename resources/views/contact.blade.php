@@ -3,7 +3,7 @@
 @section('title', 'Alveral - Hakkımızda ve İletişim')
 
 @section('content')
-
+    
 <header class="bg-slate-200 text-white py-20 px-6 text-center relative overflow-hidden">
     <div class="max-w-4xl mx-auto relative z-10">
         <span class="text-brandOrange tracking-widest text-xs uppercase font-extrabold mb-3 block">30 Yıllık Güven ve Dijital Vizyon</span>
@@ -50,6 +50,30 @@
                             <span class="text-[11px] text-slate-400 font-normal">Resmi Instagram Hesabımız</span>
                         </div>
                     </a>
+                    <a href="https://www.facebook.com/share/19GHvLb4DJ/" target="_blank" class="flex items-center gap-3.5 p-4 bg-slate-50 hover:bg-orange-50 hover:text-brandOrange rounded-2xl font-bold text-xs transition border border-slate-100 group">
+                    <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="block text-slate-900 group-hover:text-brandOrange font-extrabold text-sm">Alveral</span>
+                        <span class="text-[11px] text-slate-400 font-normal">Resmi Facebook Hesabımız</span>
+                    </div>
+                </a>
+
+                <!-- 3. TIKTOK KARTI -->
+                <a href="https://www.tiktok.com/@alveral.tr" target="_blank" class="flex items-center gap-3.5 p-4 bg-slate-50 hover:bg-orange-50 hover:text-brandOrange rounded-2xl font-bold text-xs transition border border-slate-100 group">
+                    <div class="w-9 h-9 rounded-xl bg-black flex items-center justify-center text-white shrink-0 shadow-sm">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.13z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="block text-slate-900 group-hover:text-brandOrange font-extrabold text-sm">@alveral.tr</span>
+                        <span class="text-[11px] text-slate-400 font-normal">Resmi TikTok Hesabımız</span>
+                    </div>
+                </a>
                 </div>
             </div>
 
@@ -89,6 +113,15 @@
             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Mesajınız</label>
             <textarea name="message" rows="4" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm text-slate-800 focus:outline-none focus:border-brandOrange focus:ring-1 focus:ring-brandOrange transition"></textarea>
         </div>
+
+        <!-- KVKK Onay Kutusu -->
+        <div class="flex items-start gap-3 pt-2">
+            <input type="checkbox" name="kvkk" id="kvkk" required class="mt-0.5 rounded border-slate-300 text-brandOrange focus:ring-brandOrange cursor-pointer">
+            <label for="kvkk" class="text-xs text-slate-600 leading-relaxed cursor-pointer select-none">
+                <a href="{{ route('kvkk.terms') }}" target="_blank" class="text-brandOrange underline hover:opacity-80 font-semibold">KVKK Aydınlatma Metni</a>'ni okudum, kişisel verilerimin işlenmesini kabul ediyorum.
+            </label>
+        </div>
+
         <button type="submit" class="w-full bg-slate-300 hover:bg-brandOrange text-white font-bold py-4 rounded-2xl text-xs uppercase tracking-wider transition shadow-sm cursor-pointer">
             Mesaj Gönder
         </button>
@@ -288,33 +321,35 @@
     const container = document.createElement('div');
     container.className = 'ai-chat-container';
     container.innerHTML = `
-        <div class="ai-chat-box" id="aiChatBox">
-            <div class="ai-chat-header">
-                <span style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                    <span style="width: 20px; height: 20px; display: inline-flex; align-items: center;">${robotSvg}</span>
-                    Alveral Asistan
-                </span>
-                <button class="ai-close-btn" id="aiCloseBtn">&times;</button>
-            </div>
-            
-            <!-- Hazır Hızlı Soru Butonları (Kaydırılabilir & Esnek) -->
-            <div class="ai-quick-questions">
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('En çok satan ürünler neler?')">🔥 En Çok Satanlar</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Ne önerirsin, en iyi ürün hangisi?')">⭐ Ne Önerirsin?</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Hangi kargo şirketiyle çalışıyorsunuz?')">🚚 Kargo & Sipariş</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Siz kimsiniz?')">🏬 Alveral Kimdir?</button>
-                <button class="ai-chip-btn" onclick="sendQuickQuestion('Instagram adresiniz ne?')">📸 Instagram</button>
-            </div>
+<div class="ai-chat-box" id="aiChatBox">
+    <div class="ai-chat-header">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+            <span style="width: 20px; height: 20px; display: inline-flex; align-items: center;">${robotSvg}</span>
+            Alveral Asistan
+        </span>
+        <button class="ai-close-btn" id="aiCloseBtn">&times;</button>
+    </div>
+    
+    <!-- Hazır Hızlı Soru Butonları (Kaydırılabilir & Esnek) -->
+    <div class="ai-quick-questions">
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('En çok satan ürünler neler?')">🔥 En Çok Satanlar</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Ne önerirsin, en iyi ürün hangisi?')">⭐ Ne Önerirsin?</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Hangi kargo şirketiyle çalışıyorsunuz?')">🚚 Kargo & Sipariş</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Siz kimsiniz?')">🏬 Alveral Kimdir?</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Instagram adresiniz ne?')">📸 Instagram (@alveral.tr)</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('Facebook sayfanız var mı?')">📘 Facebook (Alveral)</button>
+        <button class="ai-chip-btn" onclick="sendQuickQuestion('TikTok hesabınız var mı?')">🎵 TikTok (@alveral.tr)</button>
+    </div>
 
-            <div class="ai-chat-body" id="aiChatBody">
-                <p class="ai-message">Merhaba! Ben Alveral Yapay Zeka Asistanıyım. Size en uygun ürünü bulmak veya sorularınızı yanıtlamak için buradayım! 🤖</p>
-            </div>
+    <div class="ai-chat-body" id="aiChatBody">
+        <p class="ai-message">Merhaba! Ben Alveral Yapay Zeka Asistanıyım. Size en uygun ürünü bulmak veya sorularınızı yanıtlamak için buradayım! 🤖</p>
+    </div>
 
-            <div class="ai-chat-footer">
-                <input type="text" placeholder="Ürün veya kategori sorun..." id="aiInput">
-                <button id="aiSendBtn">Gönder</button>
-            </div>
-        </div>
+    <div class="ai-chat-footer">
+        <input type="text" placeholder="Ürün veya kategori sorun..." id="aiInput">
+        <button id="aiSendBtn">Gönder</button>
+    </div>
+</div>
         <button class="ai-float-btn" id="aiToggleBtn" title="AI Asistan">
             ${robotSvg}
         </button>
@@ -369,7 +404,7 @@
             return "En popüler ürünlerimizi doğrudan sayfamızdaki **'En Çok Satanlar'** bölümünden inceleyebilirsiniz! 🚀";
         }
         else if (text.includes('kargo') || text.includes('teslimat') || text.includes('sipariş')) {
-            return "Ürünlerimiz ulusal satış platformlarına (Trendyol, Amazon, Hepsiburada vb.) yönlendirilmektedir. Dilediğiniz güvenli platform üzerinden siparişinizi gönül rahatlığıyla oluşturabilirsiniz! 🚚✨";
+            return "Ürünlerimiz ulusal satış platformlarına (Trendyol, Hepsiburada vb.) yönlendirilmektedir. Dilediğiniz güvenli platform üzerinden siparişinizi gönül rahatlığıyla oluşturabilirsiniz! 🚚✨";
         }
         else if (text.includes('indirim yap') || text.includes('pazarlık')) {
             return "Canın sağ olsun! Pazar yerlerindeki en cömert kampanyaları yakalaman için buradayım, sepeti doldur indirimler seni bekliyor 😉🔥";
@@ -385,6 +420,12 @@
         }
         else if (text.includes('instagram') || text.includes('sosyal medya')) {
             return "Özel sürprizler, yeni koleksiyonlar ve güncel paylaşımlar için bizi Instagram'da **@alveral.tr** hesabımızdan takip edebilirsiniz! 📸";
+        }
+        else if (text.includes('facebook') || text.includes('sosyal medya')) {
+            return "Özel sürprizler, yeni koleksiyonlar ve güncel paylaşımlar için bizi facebook'da **@alveral** hesabımızdan takip edebilirsiniz! 📸";
+        }
+        else if (text.includes('tiktok') || text.includes('sosyal medya')) {
+            return "Özel sürprizler, yeni koleksiyonlar ve güncel paylaşımlar için bizi tiktok'da **@alveral.tr** hesabımızdan takip edebilirsiniz! 📸";
         }
         else if (text.includes('iade') || text.includes('değişim')) {
             return "Siparişinizi hangi pazar yerinden oluşturduysanız, o platformun kolay iade ve değişim koşulları geçerlidir. Hiçbir sorun yaşamadan işlemlerinizi gerçekleştirebilirsiniz! 🔄";

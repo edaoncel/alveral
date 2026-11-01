@@ -11,26 +11,30 @@ use App\Models\MarketplaceProduct;
 
 class AdminController extends Controller
 {
-    public function index()
-    {
-        $unreadMessagesCount = ContactMessage::where('is_read', false)->count();
-        $productsCount = Product::count();
-        $categories = Category::withCount('products')->get();
-        
-        $totalVisitors = Visitor::count();
-        $todayVisitors = Visitor::whereDate('created_at', today())->count();
+public function index()
+{
+    $unreadMessagesCount = ContactMessage::where('is_read', false)->count();
+    $productsCount = Product::count();
+    
+    // BURASI ÇOK ÖNEMLİ: withCount('products') mutlaka ekli olmalı!
+    $categories = Category::withCount('products')->get();
+    
+    $specialCategories = Category::where('show_in_menu', true)->withCount('products')->get();
+    
+    $totalVisitors = Visitor::count();
+    $todayVisitors = Visitor::whereDate('created_at', today())->count();
 
-        $syncedProductsCount = \App\Models\MarketplaceLog::where('status', 'success')->count();
+    $syncedProductsCount = \App\Models\MarketplaceLog::where('status', 'success')->count();
 
-        return view('admin.dashboard', compact(
-            'unreadMessagesCount', 
-            'productsCount', 
-            'categories',
-            'totalVisitors',
-            'todayVisitors',
-            'syncedProductsCount'
-        ));
-    }
+    return view('admin.dashboard', compact(
+        'unreadMessagesCount', 
+        'productsCount', 
+        'categories',
+        'specialCategories',
+        'totalVisitors',
+        'syncedProductsCount'
+    ));
+}
 
     public function visitors()
     {

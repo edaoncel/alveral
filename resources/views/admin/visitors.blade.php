@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('title', 'Alveral - Ziyaretçi ve Tarayıcı Logları')
+
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     <div class="flex justify-between items-center mb-6">
