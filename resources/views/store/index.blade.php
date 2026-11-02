@@ -1,6 +1,6 @@
 @extends('layouts.store')
 
-@section('title', 'Alveral - KVKK Aydınlatma Metni ve Gizlilik Politikası')
+@section('title', 'Alveral - E- Ticaret Resmi Satış Sitesi')
 
 @section('content')
 <!DOCTYPE html>
