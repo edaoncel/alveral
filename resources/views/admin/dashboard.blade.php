@@ -86,18 +86,46 @@
             </div>
         </a>
 
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-amber-500 transition group">
-            <div>
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-amber-600 transition">Pazaryeri</span>
-                <div class="flex items-baseline gap-2 mt-1">
-                    <h2 class="text-3xl font-black text-gray-900">{{ $syncedProductsCount ?? 0 }}</h2>
-                    <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full">Senkron</span>
-                </div>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition shadow-sm">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-            </div>
+        <div x-data="{ 
+    timeLeft: {{ $timeLeft ?? 900 }}, 
+    init() {
+        setInterval(() => {
+            if (this.timeLeft > 0) {
+                this.timeLeft--;
+            } else {
+                this.timeLeft = 900; // Süre bittiğinde tekrar 15 dk başa sarar
+            }
+        }, 1000);
+    },
+    get formattedTime() {
+        let minutes = Math.floor(this.timeLeft / 60);
+        let seconds = this.timeLeft % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 hover:border-amber-500 transition group">
+    
+    <div class="flex-1">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-amber-600 transition">Pazaryeri & XML</span>
+            
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 shadow-xs animate-pulse whitespace-nowrap">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0"></span>
+                <span>Kalan Süre: <span x-text="formattedTime" class="font-mono font-bold"></span></span>
+            </span>
         </div>
+        
+        <div class="flex flex-wrap items-baseline gap-2">
+            <h2 class="text-3xl font-black text-gray-900 leading-none">{{ $syncedProductsCount ?? 0 }}</h2>
+            <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-full whitespace-nowrap">Senkronize Ürün</span>
+        </div>
+    </div>
+    
+    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition shadow-sm shrink-0">
+        <svg class="w-6 h-6 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+    </div>
+</div>
 
     </div>
 

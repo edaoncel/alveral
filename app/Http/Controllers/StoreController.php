@@ -26,7 +26,7 @@ class StoreController extends Controller
             });
         }
 
-        $products = $query->latest()->paginate(12)->withQueryString();
+        $products = $query->latest()->paginate(18)->fragment('urunler');
         $productsCount = Product::count();
         
         $categories = Category::with('products')->get();

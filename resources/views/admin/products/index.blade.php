@@ -38,7 +38,9 @@
         </div>
     </div>
     
-    <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
         <a href="{{ route('admin.products.index', array_merge(request()->except('filter', 'page'), ['filter' => 'all'])) }}" 
            class="px-4 py-2 rounded-xl text-xs font-bold transition {{ !request('filter') || request('filter') == 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50' }}">
             Tüm Ürünler
@@ -53,6 +55,40 @@
         </a>
     </div>
 
+    <!-- SAĞ: TOPLU İŞLEM BUTONLARI -->
+    <div class="flex items-center gap-2">
+        <!-- YENİ: TÜM ÜRÜNLERİN MARKASINI DEĞİŞTİR -->
+        <form action="{{ route('admin.products.update-brand-all') }}" method="POST" id="bulkBrandForm" class="flex items-center gap-2">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="new_brand" id="newBrandInput">
+            <button type="button" onclick="updateAllBrands()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-2xs">
+                <i class="fa-solid fa-tags"></i> Tüm Ürünlerin Markasını Değiştir
+            </button>
+        </form>
+
+        <!-- TÜM ÜRÜNLERİ SİL -->
+        <form action="{{ route('admin.products.destroy-all') }}" method="POST" onsubmit="return confirm('DİKKAT: Veritabanındaki TÜM ürünler kalıcı olarak silinecek! Emin misiniz?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-2xs">
+                <i class="fa-solid fa-trash-can"></i> Tüm Ürünleri Sil
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript İle Prompt Tetikleme -->
+<script>
+function updateAllBrands() {
+    let brandName = prompt("Tüm ürünlere atanmasını istediğiniz yeni marka adını girin:");
+    if (brandName !== null && brandName.trim() !== "") {
+        document.getElementById('newBrandInput').value = brandName.trim();
+        document.getElementById('bulkBrandForm').submit();
+    }
+}
+</script>
+
     @if(session('success'))
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl mb-6 text-sm shadow-sm">
             {{ session('success') }}
@@ -62,12 +98,13 @@
     <div class="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold tracking-wider border-b border-slate-200">
+                <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-semibold tracking-wider border-b border-slate-200">
+                    <tr>
                         <th class="py-4 px-4">Görseller</th>
                         <th class="py-4 px-4">Ürün Adı / Kategori</th>
                         <th class="py-4 px-4">Fiyat / İndirimli Fiyat</th>
                         <th class="py-4 px-4">Stok & SKU</th>
+                        <th class="py-4 px-4">Marka, Model & Özellikler</th> <!-- Başlığı güncelledik -->
                         <th class="py-4 px-4">Affiliate Linkler</th>
                         <th class="py-4 px-4 text-center">İşlemler</th>
                     </tr>
@@ -75,11 +112,12 @@
                 <tbody class="divide-y divide-slate-100 text-sm text-slate-600">
                     @forelse($products as $product)
                         <tr class="hover:bg-slate-50/50 transition">
+                            <!-- Görseller -->
                             <td class="py-4 px-4 whitespace-nowrap">
                                 @if($product->images && count($product->images) > 0)
                                     <div class="flex items-center gap-1.5 overflow-x-auto max-w-[140px] py-1">
                                         @foreach($product->images as $img)
-                                            <img src="{{ asset($img) }}" alt="{{ $product->name }}" class="w-10 h-10 object-cover rounded-lg border border-slate-200 shadow-sm flex-shrink-0">
+                                            <img src="{{ Str::startsWith($img, 'http') ? $img : asset($img) }}" alt="{{ $product->name }}" class="w-10 h-10 object-cover rounded-lg border border-slate-200 shadow-sm flex-shrink-0">
                                         @endforeach
                                     </div>
                                 @else
@@ -88,6 +126,8 @@
                                     </div>
                                 @endif
                             </td>
+
+                            <!-- Ürün Adı / Kategori / Açıklama -->
                             <td class="py-4 px-4 max-w-xs">
                                 <div class="font-bold text-gray-900 text-base mb-0.5">{{ $product->name }}</div>
                                 <div class="flex items-center gap-2 mb-1">
@@ -95,6 +135,8 @@
                                 </div>
                                 <div class="text-slate-500 text-xs line-clamp-1">{{ $product->description ?? 'Açıklama girilmemiş.' }}</div>
                             </td>
+
+                            <!-- Fiyat -->
                             <td class="py-4 px-4 whitespace-nowrap">
                                 @if($product->discount_price && $product->price > 0)
                                     @php
@@ -109,6 +151,8 @@
                                     <div class="font-extrabold text-brandBlue text-base">{{ number_format($product->price, 2) }} ₺</div>
                                 @endif
                             </td>
+
+                            <!-- Stok & SKU -->
                             <td class="py-4 px-4 whitespace-nowrap">
                                 <div class="text-xs text-slate-500 mb-1">
                                     Stok: <span class="font-semibold text-gray-700">{{ $product->stock }}</span>
@@ -120,6 +164,27 @@
                                         </span>
                                     </div>
                                 @endif
+                            </td>
+
+                            <!-- Marka, Barkod, Model, Renk & Cinsiyet -->
+                            <td class="py-4 px-4">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    @if($product->brand)
+                                        <span class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-md font-semibold">Marka: {{ $product->brand }}</span>
+                                    @endif
+                                    @if($product->barcode)
+                                        <span class="bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded-md font-mono">Barkod: {{ $product->barcode }}</span>
+                                    @endif
+                                    @if($product->model_code)
+                                        <span class="bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-md font-mono">Model: {{ $product->model_code }}</span>
+                                    @endif
+                                    @if($product->color)
+                                        <span class="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 rounded-md font-semibold">Renk: {{ $product->color }}</span>
+                                    @endif
+                                    @if($product->gender)
+                                        <span class="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-md font-semibold">Cinsiyet: {{ $product->gender }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="py-4 px-4 max-w-xs">
                                 <div class="flex flex-wrap gap-1 max-w-[220px]">

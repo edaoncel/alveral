@@ -34,25 +34,46 @@
                 required>
         </div>
 
-        <div>
-            <label class="block text-gray-700 font-medium mb-1 text-sm">Stok Kodu (SKU) <span class="text-xs text-slate-400 font-normal">(Benzersiz Kod)</span></label>
-            <input type="text" 
-                name="sku" 
-                value="{{ old('sku', $product->sku ?? '') }}" 
-                class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm uppercase" 
-                placeholder="Örn: PRD-2026-001">
+        <!-- YENİ: MARKA VE BARKOD ALANLARI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Marka</label>
+                <input type="text" 
+                    name="brand" 
+                    value="{{ old('brand', $product->brand ?? '') }}" 
+                    class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" 
+                    placeholder="Örn: Bak Gel Al">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Barkod (GTIN / EAN)</label>
+                <input type="text" 
+                    name="barcode" 
+                    value="{{ old('barcode', $product->barcode ?? '') }}" 
+                    class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" 
+                    placeholder="Örn: 8690000000000">
+            </div>
         </div>
 
-        <div>
-            <label class="block text-gray-700 font-medium mb-1 text-sm">Kategori</label>
-            <select name="category_id" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm bg-white">
-                <option value="">Kategori Seçin</option>
-                @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}" {{ (old('category_id', $product->category_id) == $cat->id) ? 'selected' : '' }}>
-                        {{ $cat->name }}
-                    </option>
-                @endforeach
-            </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Stok Kodu (SKU) <span class="text-xs text-slate-400 font-normal">(Benzersiz Kod)</span></label>
+                <input type="text" 
+                    name="sku" 
+                    value="{{ old('sku', $product->sku ?? '') }}" 
+                    class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm uppercase" 
+                    placeholder="Örn: PRD-2026-001">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Kategori</label>
+                <select name="category_id" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm bg-white">
+                    <option value="">Kategori Seçin</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}" {{ (old('category_id', $product->category_id) == $cat->id) ? 'selected' : '' }}>
+                            {{ $cat->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
         </div>
         
         <div x-data="{ count: {{ mb_strlen(old('description', $product->description ?? '')) }} }">
@@ -82,28 +103,35 @@
                 <input type="number" name="stock" value="{{ old('stock', $product->stock) }}" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" required>
             </div>
         </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Model Kodu</label>
+                <input type="text" name="model_code" value="{{ old('model_code', $product->model_code ?? '') }}" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="Model kodu">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Renk</label>
+                <input type="text" name="color" value="{{ old('color', $product->color ?? '') }}" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="Renk">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-medium mb-1 text-sm">Cinsiyet / Hedef Kitle</label>
+                <input type="text" name="gender" value="{{ old('gender', $product->gender ?? '') }}" class="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" placeholder="Unisex, Kadın, Erkek vb.">
+            </div>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Trendyol Linki</label>
-                <input type="url" name="trendyol_url" value="{{ old('trendyol_url', $product->trendyol_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.trendyol.com/...">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Pazaryeri Direkt Linkleri (Affiliate)</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1 text-sm">Trendyol Ürün URL</label>
+                    <input type="url" name="trendyol_url" value="{{ old('trendyol_url', $product->trendyol_url ?? '') }}" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none" placeholder="https://www.trendyol.com/...">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1 text-sm">Hepsiburada Ürün URL</label>
+                    <input type="url" name="hepsiburada_url" value="{{ old('hepsiburada_url', $product->hepsiburada_url ?? '') }}" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="https://www.hepsiburada.com/...">
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Hepsiburada Linki</label>
-                <input type="url" name="hepsiburada_url" value="{{ old('hepsiburada_url', $product->hepsiburada_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.hepsiburada.com/...">
-            </div>
-            <!-- <div>
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">İdefix Linki</label>
-                <input type="url" name="idefix_url" value="{{ old('idefix_url', $product->idefix_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.idefix.com/...">
-            </div>
-            <div>
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Amazon Linki</label>
-                <input type="url" name="amazon_url" value="{{ old('amazon_url', $product->amazon_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.amazon.com.tr/...">
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Pazarama Linki</label>
-                <input type="url" name="pazarama_url" value="{{ old('pazarama_url', $product->pazarama_url ?? '') }}" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="https://www.pazarama.com/...">
-            </div> -->
         </div>
 
         @if($product->images && count($product->images) > 0)

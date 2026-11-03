@@ -251,7 +251,6 @@
         const container = document.getElementById('rightSlider');
         if (!container) return;
         
-        // Seri kaydırma: Her 2 saniyede bir hızlı ve akıcı akış
         this.autoPlayInterval = setInterval(() => {
             if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
                 container.scrollTo({ left: 0, behavior: 'smooth' });
@@ -266,7 +265,10 @@
 }" x-init="startAutoPlay()">
 
     @php
-        $bannerCategories = $categories->whereNotNull('banner_image')
+        // Sadece banner_image alanı dolu olan kategorileri filtrele
+        $bannerCategories = $categories->filter(function($cat) {
+                return !empty($cat->banner_image) && file_exists(public_path('storage/' . $cat->banner_image));
+            })
             ->sortByDesc(function($cat) {
                 return $cat->is_menu ?? $cat->show_in_menu ?? $cat->is_featured ?? 0;
             })
@@ -330,11 +332,10 @@
                 </div>
             @endif
 
-            {{-- SAĞ TARAF: OTOMATİK KAYAN HIZLI SLIDER ALANI (Resim Üzerinde Oklar) --}}
+            {{-- SAĞ TARAF: OTOMATİK KAYAN HIZLI SLIDER ALANI --}}
             <div class="lg:col-span-7 relative">
                 
                 @if($rightCategories->count() > 0)
-                    {{-- Ok Tuşları: Sağ Slider Görsellerinin Sağ Üst Katmanında --}}
                     <div class="absolute top-4 right-6 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 shadow-lg">
                         <button @click="scrollSlider('left')" class="w-9 h-9 rounded-xl bg-white/90 hover:bg-white text-slate-800 flex items-center justify-center transition active:scale-95 shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
@@ -364,10 +365,6 @@
                                 </div>
                             </div>
                         @endforeach
-                    </div>
-                @else
-                    <div class="h-full min-h-[300px] bg-slate-50 border border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                        <p class="text-sm font-bold">Sağ taraftaki slider için daha fazla kategori banneri ekleyebilirsiniz.</p>
                     </div>
                 @endif
             </div>
@@ -425,18 +422,23 @@
                             </div>
                         </div>
                         
-                        <button @click="openModal = true; product = JSON.parse($el.getAttribute('data-product'))"
-                                data-product="{{ json_encode([
-                                    'name' => $product->name,
-                                    'trendyol_url' => $product->trendyol_url,
-                                    'hepsiburada_url' => $product->hepsiburada_url,
-                                    // 'idefix_url' => $product->idefix_url,
-                                    // 'amazon_url' => $product->amazon_url,
-                                    // 'pazarama_url' => $product->pazarama_url
-                                ]) }}"
-                                class="bg-gray-900 text-white hover:bg-red-600 text-center px-3 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wider transition shadow-sm cursor-pointer whitespace-nowrap">
-                            İncele
-                        </button>
+                        <div class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+                            <!-- Trendyol Butonu (Her zaman görünür, akıllı linki kullanır) -->
+                            <a :href="product?.trendyol_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-900 font-bold transition group">
+                                <span class="flex items-center gap-2.5 text-sm">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> Trendyol'da İncele
+                                </span>
+                                <svg class="w-4 h-4 text-orange-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+
+                            <!-- Hepsiburada Butonu (Her zaman görünür, akıllı linki kullanır) -->
+                            <a :href="product?.hepsiburada_url" target="_blank" class="flex items-center justify-between p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold transition group">
+                                <span class="flex items-center gap-2.5 text-sm">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hepsiburada'da İncele
+                                </span>
+                                <svg class="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                        </div>
                     </div>
                 </div>
             @endforeach
@@ -528,17 +530,19 @@
 
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-6">
     <div id="categorySlider" class="flex gap-6 overflow-x-auto pb-4 pt-1 scrollbar-none snap-x snap-mandatory scroll-smooth focus:outline-none" style="scrollbar-width: none; -ms-overflow-style: none;">
-        @forelse($categories as $category)
+        
+        @php
+            // Sadece görseli (image) dolu olan ve storage'da var olan kategorileri filtrele
+            $validCategories = $categories->filter(function($category) {
+                return !empty($category->image) && file_exists(public_path('storage/' . $category->image));
+            });
+        @endphp
+
+        @forelse($validCategories as $category)
             <a href="{{ route('store.index', ['category' => $category->slug]) }}#urunler" class="group flex flex-col items-center text-center shrink-0 w-32 sm:w-40 snap-start">
                 
                 <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden bg-slate-100 shadow-sm group-hover:shadow-md group-hover:scale-105 transition duration-300 relative border-2 sm:border-4 border-slate-100 group-hover:border-brandOrange">
-                    @if($category->image)
-                        <img src="{{ url('storage/' . $category->image) }}" alt="{{ $category->name }}" class="w-full h-full object-cover">
-                    @else
-                        <div class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-xs">
-                            Yok
-                        </div>
-                    @endif
+                    <img src="{{ url('storage/' . $category->image) }}" alt="{{ $category->name }}" class="w-full h-full object-cover">
                 </div>
 
                 <h3 class="mt-3 text-sm font-bold text-gray-900 group-hover:text-brandOrange transition truncate w-full px-1">
@@ -546,12 +550,12 @@
                 </h3>
 
                 <span class="text-xs text-slate-400 font-light mt-0.5">
-                    {{ $category->products->count() }} Ürün
+                    {{ isset($category->products_count) ? $category->products_count : $category->products->count() }} Ürün
                 </span>
             </a>
         @empty
             <div class="w-full py-12 text-center text-gray-400 text-sm">
-                Henüz eklenmiş kategori bulunmuyor.
+                Henüz görseli eklenmiş kategori bulunmuyor.
             </div>
         @endforelse
     </div>
@@ -602,39 +606,56 @@
             @endif
 
             <div>
-                <div class="h-64 sm:h-96 bg-gray-100 relative overflow-hidden rounded-2xl mb-4 sm:mb-5 shadow-sm" x-data="{ active: 0, images: {{ json_encode($product->images ?? []) }} }">
-                    @if($product->images && count($product->images) > 0)
-                        <template x-for="(img, idx) in images" :key="idx">
-                            <div x-show="active === idx" class="absolute inset-0 w-full h-full transition-opacity duration-500">
-                                <img :src="'{{ asset('') }}' + img" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">
-                            </div>
-                        </template>
+                <div class="h-64 sm:h-96 bg-gray-100 relative overflow-hidden rounded-2xl mb-4 sm:mb-5 shadow-sm" 
+     x-data="{ 
+         active: 0, 
+         images: {{ json_encode($product->images ?? []) }},
+         getImageUrl(img) {
+             if (!img) return '';
+             if (img.startsWith('http://') || img.startsWith('https://')) {
+                 return img;
+             }
+             return '{{ asset('storage') }}/' + img;
+         }
+     }">
+    
+    @if($product->images && count($product->images) > 0)
+        <template x-for="(img, idx) in images" :key="idx">
+            <div x-show="active === idx" class="absolute inset-0 w-full h-full transition-opacity duration-300">
+                <!-- loading="lazy" ve decoding="async" eklenerek hızlandırıldı -->
+                <img :src="getImageUrl(img)" 
+                     alt="{{ $product->name }}" 
+                     loading="lazy" 
+                     decoding="async"
+                     class="w-full h-full object-cover group-hover:scale-105 transition duration-500 ease-out">
+            </div>
+        </template>
 
-                        @if(count($product->images) > 1)
-                            <button @click.prevent="active = (active === 0) ? images.length - 1 : active - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
-                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                            </button>
-                            <button @click.prevent="active = (active === images.length - 1) ? 0 : active + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
-                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1 z-10 bg-black/30 backdrop-blur-md px-2 py-1 rounded-full">
-                                <template x-for="(img, idx) in images" :key="idx">
-                                    <button @click.prevent="active = idx" :class="active === idx ? 'bg-white w-3' : 'bg-white/50 w-1'" class="h-1 rounded-full transition-all duration-300 focus:outline-none"></button>
-                                </template>
-                            </div>
-                        @endif
-                    @else
-                        <div class="flex items-center justify-center h-full text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
-                            Görsel Yok
-                        </div>
-                    @endif
+        @if(count($product->images) > 1)
+            <button @click.prevent="active = (active === 0) ? images.length - 1 : active - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <button @click.prevent="active = (active === images.length - 1) ? 0 : active + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1 z-10 bg-black/30 backdrop-blur-md px-2 py-1 rounded-full">
+                <template x-for="(img, idx) in images" :key="idx">
+                    <button @click.prevent="active = idx" :class="active === idx ? 'bg-white w-3' : 'bg-white/50 w-1'" class="h-1 rounded-full transition-all duration-300 focus:outline-none"></button>
+                </template>
+            </div>
+        @endif
+    @else
+        <div class="flex items-center justify-center h-full text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
+            Görsel Yok
+        </div>
+    @endif
 
-                    @if($product->category)
-                        <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-gray-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm z-10">
-                            {{ $product->category->name }}
-                        </span>
-                    @endif
-                </div>
+    @if($product->category)
+        <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-gray-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm z-10">
+            {{ $product->category->name }}
+        </span>
+    @endif
+</div>
 
                 <div class="px-1">
                     <h2 class="font-bold text-gray-900 text-sm sm:text-lg mb-1 group-hover:text-orange-500 transition line-clamp-1">{{ $product->name }}</h2>

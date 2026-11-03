@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
+use App\Models\Setting;
+use App\Models\Category;
 
 class CategoryController extends Controller
 {
@@ -114,4 +116,67 @@ class CategoryController extends Controller
 
         return redirect()->route('admin.categories.index')->with('success', 'Kategori başarıyla silindi.');
     }
+
+public function syncFromXml()
+{
+    // Veritabanındaki sabit ayarlardan XML URL'sini veya dosya yolunu alalım
+    $savedSetting = Setting::where('key', 'saved_xml_url')->first();
+    $pathSetting = Setting::where('key', 'saved_xml_path')->first();
+    
+    $xmlContent = null;
+
+    if ($savedSetting && !empty($savedSetting->value)) {
+        try {
+            $xmlContent = @file_get_contents($savedSetting->value);
+        } catch (\Exception $e) {
+            // URL okunamazsa dosya yolunu deneriz
+        }
+    } 
+    
+    if (!$xmlContent && $pathSetting && file_exists($pathSetting->value)) {
+        $xmlContent = @file_get_contents($pathSetting->value);
+    }
+
+    if (!$xmlContent) {
+        return redirect()->back()->with('error', "Kayıtlı bir XML URL adresi veya dosyası bulunamadı! Lütfen önce Pazaryeri Ayarları sayfasından XML kaydedin.");
+    }
+
+    $xml = @simplexml_load_string($xmlContent);
+    if ($xml === false) {
+        return redirect()->back()->with('error', "XML içeriği okunamadı veya bozuk formatta!");
+    }
+
+    $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? []));
+    $eklenenSayisi = 0;
+
+    foreach ($urunlerListesi as $urun) {
+        $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? ''));
+
+        if (!empty($kategoriAdi)) {
+            $exists = Category::where('name', $kategoriAdi)->exists();
+            
+            if (!$exists) {
+                Category::create([
+                    'name' => $kategoriAdi,
+                    'slug' => Str::slug($kategoriAdi),
+                    'show_in_menu' => 1
+                ]);
+                $eklenenSayisi++;
+            }
+        }
+    }
+
+    return redirect()->back()->with('success', "Senkronizasyon başarılı: <b>{$eklenenSayisi}</b> yeni kategori XML'den çekilerek eklendi!");
+}
+
+public function deleteAllCategories()
+{
+    // 1. Ürünlerin kategori bağlantılarını sıfırlıyoruz (Veritabanı ilişkisi hatası almamak için)
+    \App\Models\Product::whereNotNull('category_id')->update(['category_id' => null]);
+
+    // 2. Tüm kategorileri siliyoruz
+    \App\Models\Category::query()->delete();
+
+    return redirect()->back()->with('success', 'Tüm kategoriler başarıyla silindi ve ürün bağları temizlendi!');
+}
 }

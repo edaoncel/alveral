@@ -44,25 +44,29 @@
             
             <!-- 2. KATEGORİLER (Dropdown) -->
             <div class="relative" @click.away="catOpen = false">
-                <button @click="catOpen = !catOpen" type="button" class="flex items-center gap-1.5 hover:text-brandOrange transition focus:outline-none">
-                    KATEGORİLER
-                    <svg class="w-4 h-4 transition-transform duration-200" :class="catOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                
-                <div x-show="catOpen" x-cloak 
-                    x-transition:enter="transition ease-out duration-200" 
-                    x-transition:enter-start="opacity-0 translate-y-2" 
-                    x-transition:enter-end="opacity-100 translate-y-0" 
-                    class="absolute left-0 mt-4 w-60 bg-white border border-gray-100 rounded-2xl shadow-2xl py-3 z-50">
-                    <a href="{{ url('/#urunler') }}" class="block px-5 py-2.5 text-xs uppercase tracking-wider font-bold text-gray-800 hover:bg-gray-50 hover:text-brandOrange transition">Tüm Ürünler</a>
-                    
-                    @foreach($navCategories as $cat)
-                        <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block px-5 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-brandOrange transition">
-                            {{ $cat->name }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
+    <button @click="catOpen = !catOpen" type="button" class="flex items-center gap-1.5 hover:text-brandOrange transition focus:outline-none">
+        KATEGORİLER
+        <svg class="w-4 h-4 transition-transform duration-200" :class="catOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    </button>
+    
+    <div x-show="catOpen" x-cloak 
+        x-transition:enter="transition ease-out duration-200" 
+        x-transition:enter-start="opacity-0 translate-y-2" 
+        x-transition:enter-end="opacity-100 translate-y-0" 
+        class="absolute left-0 mt-4 w-60 bg-white border border-gray-100 rounded-2xl shadow-2xl py-3 z-50">
+        
+        <a href="{{ url('/#urunler') }}" class="block px-5 py-2.5 text-xs uppercase tracking-wider font-bold text-gray-800 hover:bg-gray-50 hover:text-brandOrange transition">Tüm Ürünler</a>
+        
+        <!-- KAYDIRILABİLİR ALAN (MAX 7 KATEGORİ BOYUTU / ~300px) -->
+        <div class="max-h-[300px] overflow-y-auto custom-scrollbar divide-y divide-gray-50/50">
+            @foreach($navCategories as $cat)
+                <a href="{{ url('/?category=' . $cat->slug . '#urunler') }}" class="block px-5 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-brandOrange transition">
+                    {{ $cat->name }}
+                </a>
+            @endforeach
+        </div>
+    </div>
+</div>
 
             <!-- 3. MENÜ KATEGORİLERİ (Doğrudan Akışta) -->
             @foreach($menuCategories as $menuCat)
