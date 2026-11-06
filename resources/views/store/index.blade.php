@@ -122,7 +122,8 @@
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative font-sans overflow-hidden" 
          x-data="{ activeIndex: 0, openModal: false, product: null }"
          x-init="setInterval(() => { activeIndex = (activeIndex + 1) % {{ count($bestSellers) }}; }, 5000)">
-         
+      
+    @if(isset($bestSellers) && count($bestSellers) > 0)
     <div class="flex items-center justify-between pb-6 border-b border-gray-200 mb-8">
         <div class="flex items-center space-x-4">
             <button class="p-1 hover:bg-gray-100 rounded">
@@ -139,7 +140,6 @@
         </div>
     </div>
 
-    @if(isset($bestSellers) && count($bestSellers) > 0)
     <div class="relative bg-slate-900 rounded-none overflow-hidden shadow-2xl min-h-[500px] flex flex-col lg:flex-row items-stretch mb-12">
         
         <div class="absolute inset-0 z-0">
