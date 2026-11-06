@@ -585,77 +585,77 @@
         </div>
     @endif
 
-<div class="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 mt-6">
-    @forelse($products as $product)
-        @php
-            $isSpecialCategory = $activeCategory && $activeCategory->show_in_menu;
-        @endphp
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 mt-6">
+        @forelse($products as $product)
+            @php
+                $isSpecialCategory = $activeCategory && $activeCategory->show_in_menu;
+            @endphp
 
-        <div class="group flex flex-col justify-between bg-white rounded-2xl p-4 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden
-    {{ $isSpecialCategory 
-        ? 'border-2 border-orange-400 shadow-[0_0_25px_rgba(249,115,22,0.5)] ring-4 ring-orange-400/20' 
-        : 'border border-slate-100 shadow-sm hover:shadow-2xl hover:border-brandOrange/50' }}"
-    @if($isSpecialCategory) style="animation: specialBoxPulse 2.5s infinite ease-in-out;" @endif>
-            
-            @if($isSpecialCategory)
-                <div class="absolute -inset-px bg-gradient-to-r from-orange-500 via-amber-400 to-red-500 rounded-2xl opacity-30 blur-sm group-hover:opacity-75 transition duration-500 pointer-events-none -z-10"></div>
+            <div class="group flex flex-col justify-between bg-white rounded-2xl p-4 transition-all duration-500 hover:-translate-y-3 relative overflow-hidden
+        {{ $isSpecialCategory 
+            ? 'border-2 border-orange-400 shadow-[0_0_25px_rgba(249,115,22,0.5)] ring-4 ring-orange-400/20' 
+            : 'border border-slate-100 shadow-sm hover:shadow-2xl hover:border-brandOrange/50' }}"
+        @if($isSpecialCategory) style="animation: specialBoxPulse 2.5s infinite ease-in-out;" @endif>
                 
-                <div class="absolute -right-12 top-6 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[9px] font-black uppercase tracking-widest py-1 px-12 rotate-45 shadow-lg z-20 flex items-center justify-center gap-1">
-                    ⚡ FIRSAT
+                @if($isSpecialCategory)
+                    <div class="absolute -inset-px bg-gradient-to-r from-orange-500 via-amber-400 to-red-500 rounded-2xl opacity-30 blur-sm group-hover:opacity-75 transition duration-500 pointer-events-none -z-10"></div>
+                    
+                    <div class="absolute -right-12 top-6 bg-gradient-to-r from-orange-600 to-amber-500 text-white text-[9px] font-black uppercase tracking-widest py-1 px-12 rotate-45 shadow-lg z-20 flex items-center justify-center gap-1">
+                        ⚡ FIRSAT
+                    </div>
+                @endif
+
+                <div>
+                    <div class="h-64 sm:h-96 bg-gray-100 relative overflow-hidden rounded-2xl mb-4 sm:mb-5 shadow-sm" 
+        x-data="{ 
+            active: 0, 
+            images: {{ json_encode($product->images ?? []) }},
+            getImageUrl(img) {
+                if (!img) return '';
+                if (img.startsWith('http://') || img.startsWith('https://')) {
+                    return img;
+                }
+                return '{{ asset('storage') }}/' + img;
+            }
+        }">
+        
+        @if($product->images && count($product->images) > 0)
+            <template x-for="(img, idx) in images" :key="idx">
+                <div x-show="active === idx" class="absolute inset-0 w-full h-full transition-opacity duration-300">
+                    <!-- loading="lazy" ve decoding="async" eklenerek hızlandırıldı -->
+                    <img :src="getImageUrl(img)" 
+                        alt="{{ $product->name }}" 
+                        loading="lazy" 
+                        decoding="async"
+                        class="w-full h-full object-cover group-hover:scale-105 transition duration-500 ease-out">
+                </div>
+            </template>
+
+            @if(count($product->images) > 1)
+                <button @click.prevent="active = (active === 0) ? images.length - 1 : active - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button @click.prevent="active = (active === images.length - 1) ? 0 : active + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1 z-10 bg-black/30 backdrop-blur-md px-2 py-1 rounded-full">
+                    <template x-for="(img, idx) in images" :key="idx">
+                        <button @click.prevent="active = idx" :class="active === idx ? 'bg-white w-3' : 'bg-white/50 w-1'" class="h-1 rounded-full transition-all duration-300 focus:outline-none"></button>
+                    </template>
                 </div>
             @endif
-
-            <div>
-                <div class="h-64 sm:h-96 bg-gray-100 relative overflow-hidden rounded-2xl mb-4 sm:mb-5 shadow-sm" 
-     x-data="{ 
-         active: 0, 
-         images: {{ json_encode($product->images ?? []) }},
-         getImageUrl(img) {
-             if (!img) return '';
-             if (img.startsWith('http://') || img.startsWith('https://')) {
-                 return img;
-             }
-             return '{{ asset('storage') }}/' + img;
-         }
-     }">
-    
-    @if($product->images && count($product->images) > 0)
-        <template x-for="(img, idx) in images" :key="idx">
-            <div x-show="active === idx" class="absolute inset-0 w-full h-full transition-opacity duration-300">
-                <!-- loading="lazy" ve decoding="async" eklenerek hızlandırıldı -->
-                <img :src="getImageUrl(img)" 
-                     alt="{{ $product->name }}" 
-                     loading="lazy" 
-                     decoding="async"
-                     class="w-full h-full object-cover group-hover:scale-105 transition duration-500 ease-out">
-            </div>
-        </template>
-
-        @if(count($product->images) > 1)
-            <button @click.prevent="active = (active === 0) ? images.length - 1 : active - 1" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
-                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-            </button>
-            <button @click.prevent="active = (active === images.length - 1) ? 0 : active + 1" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-1.5 sm:p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 backdrop-blur-sm z-10 focus:outline-none">
-                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            </button>
-            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex space-x-1 z-10 bg-black/30 backdrop-blur-md px-2 py-1 rounded-full">
-                <template x-for="(img, idx) in images" :key="idx">
-                    <button @click.prevent="active = idx" :class="active === idx ? 'bg-white w-3' : 'bg-white/50 w-1'" class="h-1 rounded-full transition-all duration-300 focus:outline-none"></button>
-                </template>
+        @else
+            <div class="flex items-center justify-center h-full text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
+                Görsel Yok
             </div>
         @endif
-    @else
-        <div class="flex items-center justify-center h-full text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest font-semibold">
-            Görsel Yok
-        </div>
-    @endif
 
-    @if($product->category)
-        <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-gray-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm z-10">
-            {{ $product->category->name }}
-        </span>
-    @endif
-</div>
+        @if($product->category)
+            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-gray-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm z-10">
+                {{ $product->category->name }}
+            </span>
+        @endif
+    </div>
 
                 <div class="px-1">
                     <h2 class="font-bold text-gray-900 text-sm sm:text-lg mb-1 group-hover:text-orange-500 transition line-clamp-1">{{ $product->name }}</h2>
@@ -708,7 +708,7 @@
 </div>
 
     <div class="mt-16">
-        {{ $products->links() }}
+        {{ $products->withQueryString()->links() }}
     </div>
 
     {{-- Modal Kodları --}}
