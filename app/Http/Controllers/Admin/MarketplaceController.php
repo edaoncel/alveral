@@ -70,7 +70,7 @@ public function settings()
         return redirect()->back()->with('success', ucfirst($pazaryeri) . " pazaryeri ayarları başarıyla güncellendi!");
     }
 
-    public function uploadAndSync(Request $request)
+public function uploadAndSync(Request $request)
     {
         // Zaman aşımı ve bellek sınırını artırıyoruz (Binlerce ürün için şart)
         set_time_limit(300);
@@ -135,8 +135,13 @@ public function settings()
         }
 
         $firma_kar = session('mp_trendyol_kar', 26.00);
-        $sayac = 0;
+        $eklenenSayisi = 0;
+        $guncellenenSayisi = 0;
+        
         $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? []));
+
+        // Kategorileri hafızada tutarak her döngüde sorgu atmayı önleyelim
+        $categoryCache = Category::pluck('id', 'name')->toArray();
 
         foreach ($urunlerListesi as $urun) {
             $stok_kodu = trim((string)($urun->sku ?? $urun->StokKodu ?? $urun->Stok_Kodu ?? ''));
@@ -149,21 +154,27 @@ public function settings()
             $aciklama   = (string)($urun->description ?? $urun->Aciklama ?? $urun->Detay ?? $urun->details ?? '');
             
             $marka      = 'Alveral'; 
-            
             $barkod     = trim((string)($urun->barcode ?? $urun->Barcode ?? $urun->Barkod ?? $urun->GTIN ?? $urun->Ean ?? ''));
             
             $alis_fiyati = floatval($urun->price ?? $urun->Fiyat ?? $urun->AlisFiyati ?? 0);
             $stok = intval($urun->stock ?? $urun->Stok ?? $urun->Adet ?? 10);
             
-            // Kategori işleme
+            // Satış fiyatı hesaplama (Doğru matematiksel işlem)
+            $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
+            $gender = trim((string)($urun->gender ?? $urun->Gender ?? $urun->Cinsiyet ?? ''));
+
+            // Kategori işleme (Önbellek destekli)
             $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? 'Genel'));
             $categoryId = null;
             if (!empty($kategoriAdi)) {
-                $category = Category::firstOrCreate(
-                    ['name' => $kategoriAdi],
-                    ['slug' => Str::slug($kategoriAdi)]
-                );
-                $categoryId = $category->id;
+                if (!isset($categoryCache[$kategoriAdi])) {
+                    $category = Category::firstOrCreate(
+                        ['name' => $kategoriAdi],
+                        ['slug' => Str::slug($kategoriAdi)]
+                    );
+                    $categoryCache[$kategoriAdi] = $category->id;
+                }
+                $categoryId = $categoryCache[$kategoriAdi];
             }
 
             // Görsel işleme
@@ -182,22 +193,30 @@ public function settings()
                 }
             }
 
-            // Hata Düzeltildi: Parantez yerine doğru çarpma işlemi yapıldı
-            $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
-            $gender = trim((string)($urun->gender ?? $urun->Gender ?? $urun->Cinsiyet ?? ''));
-
             // Ürün veritabanında var mı kontrol ediyoruz
             $existingProduct = Product::where('sku', $stok_kodu)->first();
 
             if ($existingProduct) {
-                // Ürün zaten varsa; sizin elle değiştirdiğiniz açıklamayı ve özel bilgileri EZMİYORUZ.
-                // Sadece fiyat, stok, anlık görseller ve kategori güncelleniyor.
-                $existingProduct->update([
-                    'price'       => $satis_fiyati > 0 ? $satis_fiyati : $existingProduct->price,
-                    'stock'       => $stok,
-                    'images'      => !empty($gorseller) ? $gorseller : $existingProduct->images,
-                    'category_id' => $categoryId ?? $existingProduct->category_id,
-                ]);
+                // Hassas float ve stok karşılaştırması
+                $eskiFiyat = round((float)$existingProduct->price, 2);
+                $yeniFiyat = round((float)($satis_fiyati > 0 ? $satis_fiyati : $existingProduct->price), 2);
+
+                $eskiStok  = (int)$existingProduct->stock;
+                $yeniStok  = (int)$stok;
+
+                $isPriceChanged = abs($eskiFiyat - $yeniFiyat) > 0.001;
+                $isStockChanged = $eskiStok !== $yeniStok;
+
+                // SADECE Gerçekten Fiyat veya Stok Değiştiyse Güncelle (updated_at sadece o zaman oynar)
+                if ($isPriceChanged || $isStockChanged) {
+                    $existingProduct->update([
+                        'price'       => $yeniFiyat,
+                        'stock'       => $yeniStok,
+                        'images'      => !empty($gorseller) ? $gorseller : $existingProduct->images,
+                        'category_id' => $categoryId ?? $existingProduct->category_id,
+                    ]);
+                    $guncellenenSayisi++;
+                }
             } else {
                 // Yeni ürün ilk defa ekleniyor
                 Product::create([
@@ -209,19 +228,19 @@ public function settings()
                     'color'       => $color,
                     'gender'      => $gender,
                     'description' => $aciklama,
-                    'slug'        => Str::slug($urun_adi) . '-' . rand(1000, 9999),
+                    'slug'        => Str::slug($urun_adi) . '-' . uniqid(),
                     'price'       => $satis_fiyati > 0 ? $satis_fiyati : 100.00,
                     'stock'       => $stok,
                     'images'      => $gorseller,
                     'category_id' => $categoryId,
                 ]);
+
+                $eklenenSayisi++;
             }
-            
-            $sayac++;
         }
 
-        \App\Models\Setting::updateOrCreate(['key' => 'last_sync_time'], ['value' => now()]);
+        Setting::updateOrCreate(['key' => 'last_sync_time'], ['value' => now()]);
 
-        return redirect()->back()->with('success', "Senkronizasyon başarılı: <b>{$sayac}</b> ürün güncellendi/eklendi!");
+        return redirect()->back()->with('success', "Senkronizasyon başarılı: Eklenen: {$eklenenSayisi}, Güncellenen: {$guncellenenSayisi}");
     }
 }

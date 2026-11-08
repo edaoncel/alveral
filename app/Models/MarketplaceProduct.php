@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MarketplaceController extends Controller
@@ -48,34 +49,55 @@ class MarketplaceController extends Controller
                 }
 
                 $firma_kar = session('alveral_kar', 26.00); 
-                $sayac = 0;
+                
+                $eklenenSayisi = 0;
+                $guncellenenSayisi = 0;
 
                 $urunlerListesi = isset($xml->Urun) ? $xml->Urun : ($xml->item ?? $xml->children());
 
                 foreach ($urunlerListesi as $urun) {
                     $stok_kodu = trim((string)($urun->StokKodu ?? $urun->sku ?? $urun->ProductCode ?? ''));
-                    $urun_adi = (string)($urun->UrunAdi ?? $urun->name ?? $urun->Title ?? 'İsimsiz Ürün');
-                    $alis_fiyati = floatval($urun->Fiyat ?? $urun->price ?? $urun->BuyingPrice ?? 0);
-                    $stok = intval($urun->Stok ?? $urun->stock ?? 0);
-                    $affiliate_url = (string)($urun->Link ?? $urun->url ?? '#');
-                    
                     if (empty($stok_kodu)) {
                         continue;
                     }
 
+                    $urun_adi = mb_substr(trim((string)($urun->UrunAdi ?? $urun->name ?? $urun->Title ?? 'İsimsiz Ürün')), 0, 255);
+                    $alis_fiyati = floatval($urun->Fiyat ?? $urun->price ?? $urun->BuyingPrice ?? 0);
+                    $stok = intval($urun->Stok ?? $urun->stock ?? 0);
+                    $affiliate_url = trim((string)($urun->Link ?? $urun->url ?? '#'));
+                    
+                    // DÜZELTİLDİ: Eksik olan çarpı (*) işareti eklendi
                     $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
 
                     $dbProduct = Product::where('sku', $stok_kodu)->first();
 
                     if ($dbProduct) {
-                        $dbProduct->name = $urun_adi;
-                        $dbProduct->price = $satis_fiyati;
-                        $dbProduct->stock = $stok;
-                        if (isset($dbProduct->affiliate_url)) {
-                            $dbProduct->affiliate_url = $affiliate_url;
+                        $eskiFiyat = number_format((float)$dbProduct->price, 2, '.', '');
+                        $yeniFiyat = number_format((float)$satis_fiyati, 2, '.', '');
+
+                        $eskiStok  = (int)$dbProduct->stock;
+                        $yeniStok  = (int)$stok;
+
+                        $isPriceChanged = $eskiFiyat !== $yeniFiyat;
+                        $isStockChanged = $eskiStok !== $yeniStok;
+
+                        // Hangi ürünün fiyatı veya stoğu değişti loglayalım
+                        if ($isPriceChanged || $isStockChanged) {
+                            Log::info("Değişen Ürün SKU: {$stok_kodu}", [
+                                'eski_fiyat' => $eskiFiyat,
+                                'yeni_fiyat' => $yeniFiyat,
+                                'eski_stok'  => $eskiStok,
+                                'yeni_stok'  => $yeniStok
+                            ]);
+
+                            $dbProduct->price = $yeniFiyat;
+                            $dbProduct->stock = $yeniStok;
+                            
+                            $dbProduct->save();
+                            $guncellenenSayisi++;
                         }
-                        $dbProduct->save();
                     } else {
+                        // Yeni ürün ilk kez ekleniyor
                         Product::create([
                             'sku' => $stok_kodu,
                             'name' => $urun_adi,
@@ -84,11 +106,12 @@ class MarketplaceController extends Controller
                             'stock' => $stok,
                             'affiliate_url' => $affiliate_url,
                         ]);
+
+                        $eklenenSayisi++;
                     }
-                    $sayac++;
                 }
 
-                return redirect()->back()->with('success', "Alveral XML başarıyla işlendi: <b>{$sayac}</b> adet ürün güncellendi/eklendi!");
+                return redirect()->back()->with('success', "Senkronizasyon başarılı: Eklenen: {$eklenenSayisi}, Güncellenen: {$guncellenenSayisi}");
             }
         }
 
