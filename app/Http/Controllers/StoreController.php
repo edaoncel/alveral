@@ -26,7 +26,10 @@ class StoreController extends Controller
             });
         }
 
-        $products = $query->latest()->paginate(18)->fragment('urunler');
+        $products = $query->orderBy('name', 'asc') // Veya 'sku' bazlı sıralama
+                  ->paginate(18)
+                  ->withQueryString()
+                  ->fragment('urunler');
         $productsCount = Product::count();
         
         $categories = Category::with('products')->get();

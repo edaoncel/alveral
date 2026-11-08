@@ -9,30 +9,55 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Product::with('category');
+public function index(Request $request)
+{
+    $query = Product::with('category');
 
-        if ($request->filled('search')) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('sku', 'like', '%' . $searchTerm . '%');
-            });
-        }
-
-        if ($request->filled('filter')) {
-            if ($request->filter == 'discounted') {
-                $query->whereNotNull('discount_price')->where('discount_price', '>', 0);
-            } elseif ($request->filter == 'bestseller') {
-                $query->where('is_best_seller', true); 
-            }
-        }
-
-        $products = $query->latest()->paginate(18)->fragment('urunler');
-
-        return view('admin.products.index', compact('products'));
+    if ($request->filled('search')) {
+        $searchTerm = $request->search;
+        $query->where(function($q) use ($searchTerm) {
+            $q->where('name', 'like', '%' . $searchTerm . '%')
+              ->orWhere('sku', 'like', '%' . $searchTerm . '%');
+        });
     }
+
+    if ($request->filled('filter')) {
+        $filter = $request->filter;
+
+        if ($filter == 'discounted') {
+            $query->whereNotNull('discount_price')->where('discount_price', '>', 0);
+        } elseif ($filter == 'bestseller') {
+            $query->where('is_best_seller', true); 
+        } elseif ($filter == 'new_today') {
+            $query->whereDate('created_at', today());
+            // Yeni eklenenler sayfasına bakıldıysa mühürle
+            session(['last_viewed_new_date' => today()->toDateString()]);
+        } elseif ($filter == 'updated_today') {
+            $query->whereDate('updated_at', today())
+                  ->whereColumn('updated_at', '>', 'created_at');
+            // Güncellenenler sayfasına bakıldıysa mühürle
+            session(['last_viewed_updated_date' => today()->toDateString()]);
+        }
+    }
+
+    $newTodayCount = Product::whereDate('created_at', today())->count();
+    
+$updatedTodayCount = Product::whereDate('updated_at', today())
+                            ->whereColumn('updated_at', '>', 'created_at')
+                            ->count();
+
+if (session('last_viewed_updated_date') === today()->toDateString()) {
+    $updatedTodayCount = 0;
+}
+
+    // Sayfalama ve URL parametrelerinin korunması
+    $products = $query->orderBy('name', 'asc') 
+                      ->paginate(18)
+                      ->withQueryString()
+                      ->fragment('urunler');
+
+    return view('admin.products.index', compact('products', 'newTodayCount', 'updatedTodayCount'));
+}
 
     public function create()
     {

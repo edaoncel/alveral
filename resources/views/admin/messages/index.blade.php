@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Sinem - Mesajlar Paneli')
+@section('title', 'Alveral - Mesajlar Paneli')
 
 @section('content')
 <div class="max-w-6xl mx-auto">
@@ -45,7 +45,7 @@
                         <td class="p-4 text-gray-400 text-xs whitespace-nowrap">{{ $msg->created_at->format('d.m.Y H:i') }}</td>
                         <td class="p-4 text-right flex items-center justify-end gap-2 whitespace-nowrap">
                             
-                            <a href="mailto:{{ $msg->email }}?subject=Yanıt: {{ urlencode($msg->subject ?? 'Sinem Destek') }}" 
+                            <a href="mailto:{{ $msg->email }}?subject=Yanıt: {{ urlencode($msg->subject ?? 'Alveral Destek') }}" 
                                class="text-xs bg-slate-900 hover:bg-brandOrange text-white px-3 py-1.5 rounded-lg font-bold transition">
                                 Yanıtla
                             </a>

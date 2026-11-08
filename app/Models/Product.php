@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use App\Models\Category;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,57 +32,81 @@ class Product extends Model
         'model_code',
         'gender',
         'color',
+        'last_action_note', // YENİ: Otomatik değişiklik notu için eklendi
     ];
 
     protected $casts = [
         'images' => 'array',
     ];
 
-    /**
-     * Görüntüleri her zaman güvenli bir dizi (array) olarak döndürür.
-     * Veritabanında string veya bozuk JSON olsa bile sistem asla patlamaz.
-     */
-    public function getImagesAttribute($value)
-    {
-        if (is_array($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            $decoded = json_decode($value, true);
-            if (is_array($decoded)) {
-                return $decoded;
-            }
-            // Eğer JSON değil de düz metin (tek bir resim yolu) ise dizi içinde döndür
-            return !empty($value) ? [$value] : [];
-        }
-
-        return [];
-    }
-
     public function category()
-    {
-        return $this->belongsTo(Category::class, 'category_id');
-    }
-
-    // Trendyol için akıllı link (Direkt link varsa onu, yoksa arama linkini döndürür)
-public function getTrendyolAffiliateUrlAttribute()
 {
-    if (!empty($this->attributes['trendyol_url'])) {
-        return $this->attributes['trendyol_url'];
-    }
-    
-    $query = urlencode($this->name);
-    return "https://www.trendyol.com/sr?q={$query}";
+    return $this->belongsTo(Category::class, 'category_id');
 }
 
-    public function getHepsiburadaAffiliateUrlAttribute()
+protected static function booted()
     {
-        if (!empty($this->attributes['hepsiburada_url'])) {
-            return $this->attributes['hepsiburada_url'];
-        }
+        static::updating(function ($product) {
+            $changes = [];
+            $time = now()->format('H:i'); // O anki saat
 
-        $query = urlencode($this->name);
-        return "https://www.hepsiburada.com/ara?q={$query}";
+            if ($product->isDirty('name')) {
+                $changes[] = 'Ürün adı değiştirildi';
+            }
+            if ($product->isDirty('category_id')) {
+                $changes[] = 'Kategori değiştirildi';
+            }
+            // YENİ: Fiyat ve indirimli fiyatı ayırdık
+            if ($product->isDirty('price')) {
+                $changes[] = 'Fiyat güncellendi';
+            }
+            if ($product->isDirty('discount_price')) {
+                $changes[] = 'İndirimli fiyat güncellendi';
+            }
+            if ($product->isDirty('stock')) {
+                $changes[] = 'Stok adedi güncellendi';
+            }
+            if ($product->isDirty('sku')) {
+                $changes[] = 'SKU kodu güncellendi';
+            }
+            if ($product->isDirty('barcode')) {
+                $changes[] = 'Barkod değiştirildi';
+            }
+            if ($product->isDirty('brand')) {
+                $changes[] = 'Marka güncellendi';
+            }
+            if ($product->isDirty('model_code')) {
+                $changes[] = 'Model kodu değiştirildi';
+            }
+            if ($product->isDirty('color')) {
+                $changes[] = 'Renk güncellendi';
+            }
+            if ($product->isDirty('gender')) {
+                $changes[] = 'Cinsiyet güncellendi';
+            }
+            if ($product->isDirty('description')) {
+                $changes[] = 'Açıklama güncellendi';
+            }
+            if ($product->isDirty('images')) {
+                $changes[] = 'Görseller güncellendi';
+            }
+            if (
+                $product->isDirty('trendyol_url') || 
+                $product->isDirty('hepsiburada_url') || 
+                $product->isDirty('idefix_url') || 
+                $product->isDirty('amazon_url') || 
+                $product->isDirty('pazarama_url')
+            ) {
+                $changes[] = 'Pazaryeri linkleri güncellendi';
+            }
+
+            // Değişiklikleri birleştirme
+            if (!empty($changes)) {
+                $actionText = implode(', ', $changes);
+                $product->last_action_note = "{$actionText} - {$time}";
+            } else {
+                $product->last_action_note = "Ürün bilgileri güncellendi - {$time}";
+            }
+        });
     }
 }

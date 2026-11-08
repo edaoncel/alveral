@@ -34,10 +34,49 @@
             </div>
 
             <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.dashboard') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <a href="{{ route('admin.dashboard') }}" 
+                @if(isset($updatedTodayCount) && $updatedTodayCount > 0) onclick="playBeep(event)" @endif
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.dashboard') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Panel Anasayfa
+                    
+                    <span>Panel Anasayfa</span>
+                    
+                    @if(isset($updatedTodayCount) && $updatedTodayCount > 0)
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse shadow-sm ml-auto">
+                            {{ $updatedTodayCount }}
+                        </span>
+                    @endif
                 </a>
+
+                {{-- Eğer bu script layoutunuzda (şablonun altında) zaten ekliyse tekrar eklemenize gerek yoktur --}}
+                @if(isset($updatedTodayCount) && $updatedTodayCount > 0)
+                <script>
+                    function playBeep(event) {
+                        try {
+                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            const oscillator = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+
+                            // Tiz ve dikkat çekici bip sesi (1200 Hz)
+                            oscillator.type = 'sine'; 
+                            oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+
+                            // Ses seviyesi ve süresi (0.3 saniye)
+                            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); 
+                            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); 
+
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+
+                            oscillator.start();
+                            oscillator.stop(audioCtx.currentTime + 0.3);
+                        } catch (e) {
+                            console.error("Audio Context başlatılamadı:", e);
+                        }
+                    }
+                </script>
+                @endif
 
                 <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.products.*') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
@@ -63,19 +102,80 @@
                     $unreadCount = \App\Models\ContactMessage::where('is_read', false)->count();
                 @endphp
 
-                <a href="{{ route('admin.messages.index') }}" class="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-800 transition text-sm font-semibold text-slate-300 hover:text-white">
+                <a href="{{ route('admin.messages.index') }}" 
+                @if($unreadCount > 0) onclick="playMessageBeep(event)" @endif
+                class="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-800 transition text-sm font-semibold text-slate-300 hover:text-white">
                     <div class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                         </svg>
                         <span>Gelen Mesajlar</span>
                     </div>
+                    
                     @if($unreadCount > 0)
                         <span class="bg-rose-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm animate-pulse">
                             {{ $unreadCount }}
                         </span>
                     @endif
                 </a>
+
+                {{-- Mesajlar için özel, daha tok ve farklı tonlu bildirim sesi (Frekans: 600Hz) --}}
+                @if($unreadCount > 0)
+                <script>
+                    function playMessageBeep(event) {
+                        try {
+                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            const oscillator = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+
+                            // Ürün bildiriminden farklı olarak daha tok/kalın bir ses tonu (600 Hz)
+                            oscillator.type = 'sine'; 
+                            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); 
+
+                            // Ses seviyesi ve süresi (0.4 saniye - biraz daha uzun ve tok)
+                            gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime); 
+                            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4); 
+
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+
+                            oscillator.start();
+                            oscillator.stop(audioCtx.currentTime + 0.4);
+                        } catch (e) {
+                            console.error("Audio Context başlatılamadı:", e);
+                        }
+                    }
+                </script>
+                @endif
+
+                {{-- Mesajlar için özel, daha tok ve farklı tonlu bildirim sesi (Frekans: 600Hz) --}}
+                @if($unreadCount > 0)
+                <script>
+                    function playMessageBeep(event) {
+                        try {
+                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            const oscillator = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+
+                            // Ürün bildiriminden farklı olarak daha tok/kalın bir ses tonu (600 Hz)
+                            oscillator.type = 'sine'; 
+                            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); 
+
+                            // Ses seviyesi ve süresi (0.4 saniye - biraz daha uzun ve tok)
+                            gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime); 
+                            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4); 
+
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+
+                            oscillator.start();
+                            oscillator.stop(audioCtx.currentTime + 0.4);
+                        } catch (e) {
+                            console.error("Audio Context başlatılamadı:", e);
+                        }
+                    }
+                </script>
+                @endif
 
                 <a href="{{ route('admin.visitors') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.visitors') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -121,10 +221,49 @@
                 </button>
             </div>
             <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.dashboard') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                <a href="{{ route('admin.dashboard') }}" 
+                @if(isset($updatedTodayCount) && $updatedTodayCount > 0) onclick="playBeep(event)" @endif
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.dashboard') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                    
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Panel Anasayfa
+                    
+                    <span>Panel Anasayfa</span>
+                    
+                    @if(isset($updatedTodayCount) && $updatedTodayCount > 0)
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse shadow-sm ml-auto">
+                            {{ $updatedTodayCount }}
+                        </span>
+                    @endif
                 </a>
+
+                {{-- Eğer bu script layoutunuzda (şablonun altında) zaten ekliyse tekrar eklemenize gerek yoktur --}}
+                @if(isset($updatedTodayCount) && $updatedTodayCount > 0)
+                <script>
+                    function playBeep(event) {
+                        try {
+                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            const oscillator = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+
+                            // Tiz ve dikkat çekici bip sesi (1200 Hz)
+                            oscillator.type = 'sine'; 
+                            oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+
+                            // Ses seviyesi ve süresi (0.3 saniye)
+                            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); 
+                            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); 
+
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+
+                            oscillator.start();
+                            oscillator.stop(audioCtx.currentTime + 0.3);
+                        } catch (e) {
+                            console.error("Audio Context başlatılamadı:", e);
+                        }
+                    }
+                </script>
+                @endif
 
                 <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->routeIs('admin.products.*') ? 'bg-brandOrange text-white shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>

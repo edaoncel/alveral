@@ -71,176 +71,186 @@ public function settings()
     }
 
 public function uploadAndSync(Request $request)
-    {
-        // Zaman aşımı ve bellek sınırını artırıyoruz (Binlerce ürün için şart)
-        set_time_limit(300);
-        ini_set('memory_limit', '512M');
+{
+    // Zaman aşımı ve bellek sınırını artırıyoruz
+    set_time_limit(300);
+    ini_set('memory_limit', '512M');
 
-        $xmlContent = null;
+    $xmlContent = null;
 
-        // 1. URL girildiyse veritabanına kalıcı olarak kaydedelim
-        if ($request->filled('xml_url')) {
-            $xmlUrl = $request->input('xml_url');
-            Setting::updateOrCreate(
-                ['key' => 'saved_xml_url'],
-                ['value' => $xmlUrl]
-            );
-        } 
+    // 1. URL girildiyse veritabanına kalıcı olarak kaydedelim
+    if ($request->filled('xml_url')) {
+        $xmlUrl = $request->input('xml_url');
+        Setting::updateOrCreate(
+            ['key' => 'saved_xml_url'],
+            ['value' => $xmlUrl]
+        );
+    } 
 
-        // Kayıtlı URL'yi veritabanından çekelim
-        $savedSetting = Setting::where('key', 'saved_xml_url')->first();
-        $xmlUrl = $savedSetting ? $savedSetting->value : null;
+    $savedSetting = Setting::where('key', 'saved_xml_url')->first();
+    $xmlUrl = $savedSetting ? $savedSetting->value : null;
 
-        // 2. Eğer URL üzerinden çekilecekse
-        if ($xmlUrl && !$request->hasFile('xml_dosyasi')) {
+    // 2. URL veya Dosya üzerinden XML içeriğini alalım
+    if ($xmlUrl && !$request->hasFile('xml_dosyasi')) {
+        try {
+            $xmlContent = @file_get_contents($xmlUrl);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "Kaydedilmiş XML URL adresine ulaşılamadı!");
+        }
+    } 
+    elseif ($request->hasFile('xml_dosyasi') && $request->file('xml_dosyasi')->isValid()) {
+        $file = $request->file('xml_dosyasi');
+        $fileName = 'supplier_feed.xml';
+        $file->move(public_path('uploads'), $fileName);
+        
+        $xmlPath = public_path('uploads/' . $fileName);
+        $xmlContent = @file_get_contents($xmlPath);
+
+        Setting::updateOrCreate(
+            ['key' => 'saved_xml_path'],
+            ['value' => $xmlPath]
+        );
+    }
+    else {
+        $pathSetting = Setting::where('key', 'saved_xml_path')->first();
+        if ($pathSetting && file_exists($pathSetting->value)) {
+            $xmlContent = @file_get_contents($pathSetting->value);
+        } elseif ($xmlUrl) {
             try {
                 $xmlContent = @file_get_contents($xmlUrl);
-            } catch (\Exception $e) {
-                return redirect()->back()->with('error', "Kaydedilmiş XML URL adresine ulaşılamadı!");
-            }
-        } 
-        // 3. Eğer yeni bir dosya yüklendiyse
-        elseif ($request->hasFile('xml_dosyasi') && $request->file('xml_dosyasi')->isValid()) {
-            $file = $request->file('xml_dosyasi');
-            $fileName = 'supplier_feed.xml';
-            $file->move(public_path('uploads'), $fileName);
-            
-            $xmlPath = public_path('uploads/' . $fileName);
-            $xmlContent = @file_get_contents($xmlPath);
-
-            Setting::updateOrCreate(
-                ['key' => 'saved_xml_path'],
-                ['value' => $xmlPath]
-            );
+            } catch (\Exception $e) {}
         }
-        // 4. Önceden yüklenmiş sabit dosya veya URL var mı kontrol edelim
-        else {
-            $pathSetting = Setting::where('key', 'saved_xml_path')->first();
-            if ($pathSetting && file_exists($pathSetting->value)) {
-                $xmlContent = @file_get_contents($pathSetting->value);
-            } elseif ($xmlUrl) {
-                try {
-                    $xmlContent = @file_get_contents($xmlUrl);
-                } catch (\Exception $e) {}
-            }
-        }
+    }
 
-        if (!$xmlContent) {
-            return redirect()->back()->with('error', "Lütfen geçerli bir XML URL adresi girin veya XML dosyası yükleyin!");
-        }
+    if (!$xmlContent) {
+        return redirect()->back()->with('error', "Lütfen geçerli bir XML URL adresi girin veya XML dosyası yükleyin!");
+    }
 
-        $xml = @simplexml_load_string($xmlContent);
-        if ($xml === false) {
-            return redirect()->back()->with('error', "XML içeriği okunamadı veya bozuk formatta!");
-        }
+    $xml = @simplexml_load_string($xmlContent);
+    if ($xml === false) {
+        return redirect()->back()->with('error', "XML içeriği okunamadı veya bozuk formatta!");
+    }
 
-        $firma_kar = session('mp_trendyol_kar', 26.00);
-        $eklenenSayisi = 0;
-        $guncellenenSayisi = 0;
+    $firma_kar = session('mp_trendyol_kar', 26.00);
+    $eklenenSayisi = 0;
+    $guncellenenSayisi = 0;
+    
+    $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? []));
+
+    // Kategorileri hafızada tutalım
+    $categoryCache = Category::pluck('id', 'name')->toArray();
+
+    // XML içinde aynı SKU'nun mükerrer işlenmesini önlemek için takip dizisi
+    $islenenSkuler = [];
+
+    foreach ($urunlerListesi as $urun) {
+        $stok_kodu = trim((string)($urun->sku ?? $urun->StokKodu ?? $urun->Stok_Kodu ?? ''));
+        if (empty($stok_kodu)) continue;
+
+        // Mükerrer SKU kontrolü (Aynı XML dosyasında birden fazla varsa atla)
+        if (in_array($stok_kodu, $islenenSkuler)) {
+            continue;
+        }
+        $islenenSkuler[] = $stok_kodu;
+
+        $urun_adi = mb_substr(trim((string)($urun->name ?? $urun->UrunAdi ?? $urun->Baslik ?? 'İsimsiz Ürün')), 0, 255);
+        $model_code = trim((string)($urun->model_code ?? $urun->ModelCode ?? $urun->ModelKodu ?? $urun->Model ?? ''));
+        $color      = trim((string)($urun->color ?? $urun->Color ?? $urun->Renk ?? ''));
+        $aciklama   = (string)($urun->description ?? $urun->Aciklama ?? $urun->Detay ?? $urun->details ?? '');
+        $marka      = 'Alveral'; 
+        $barkod     = trim((string)($urun->barcode ?? $urun->Barcode ?? $urun->Barkod ?? $urun->GTIN ?? $urun->Ean ?? ''));
         
-        $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? []));
+        $alis_fiyati = floatval($urun->price ?? $urun->Fiyat ?? $urun->AlisFiyati ?? 0);
+        $stok = intval($urun->stock ?? $urun->Stok ?? $urun->Adet ?? 10);
+        
+        // Satış fiyatı hesaplama (Doğru matematiksel işlem)
+        $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
+        $gender = trim((string)($urun->gender ?? $urun->Gender ?? $urun->Cinsiyet ?? ''));
 
-        // Kategorileri hafızada tutarak her döngüde sorgu atmayı önleyelim
-        $categoryCache = Category::pluck('id', 'name')->toArray();
-
-        foreach ($urunlerListesi as $urun) {
-            $stok_kodu = trim((string)($urun->sku ?? $urun->StokKodu ?? $urun->Stok_Kodu ?? ''));
-            if (empty($stok_kodu)) continue;
-
-            $urun_adi = mb_substr(trim((string)($urun->name ?? $urun->UrunAdi ?? $urun->Baslik ?? 'İsimsiz Ürün')), 0, 255);
-            
-            $model_code = trim((string)($urun->model_code ?? $urun->ModelCode ?? $urun->ModelKodu ?? $urun->Model ?? ''));
-            $color      = trim((string)($urun->color ?? $urun->Color ?? $urun->Renk ?? ''));
-            $aciklama   = (string)($urun->description ?? $urun->Aciklama ?? $urun->Detay ?? $urun->details ?? '');
-            
-            $marka      = 'Alveral'; 
-            $barkod     = trim((string)($urun->barcode ?? $urun->Barcode ?? $urun->Barkod ?? $urun->GTIN ?? $urun->Ean ?? ''));
-            
-            $alis_fiyati = floatval($urun->price ?? $urun->Fiyat ?? $urun->AlisFiyati ?? 0);
-            $stok = intval($urun->stock ?? $urun->Stok ?? $urun->Adet ?? 10);
-            
-            // Satış fiyatı hesaplama (Doğru matematiksel işlem)
-            $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
-            $gender = trim((string)($urun->gender ?? $urun->Gender ?? $urun->Cinsiyet ?? ''));
-
-            // Kategori işleme (Önbellek destekli)
-            $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? 'Genel'));
-            $categoryId = null;
-            if (!empty($kategoriAdi)) {
-                if (!isset($categoryCache[$kategoriAdi])) {
-                    $category = Category::firstOrCreate(
-                        ['name' => $kategoriAdi],
-                        ['slug' => Str::slug($kategoriAdi)]
-                    );
-                    $categoryCache[$kategoriAdi] = $category->id;
-                }
-                $categoryId = $categoryCache[$kategoriAdi];
+        // Kategori işleme
+        $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? 'Genel'));
+        $categoryId = null;
+        if (!empty($kategoriAdi)) {
+            if (!isset($categoryCache[$kategoriAdi])) {
+                $category = Category::firstOrCreate(
+                    ['name' => $kategoriAdi],
+                    ['slug' => Str::slug($kategoriAdi)]
+                );
+                $categoryCache[$kategoriAdi] = $category->id;
             }
+            $categoryId = $categoryCache[$kategoriAdi];
+        }
 
-            // Görsel işleme
-            $gorseller = [];
-            if (isset($urun->images)) {
-                if (isset($urun->images->image)) {
-                    foreach ($urun->images->image as $img) {
-                        $url = trim((string)$img);
-                        if (!empty($url)) $gorseller[] = $url;
-                    }
-                } else {
-                    foreach ($urun->images->children() as $img) {
-                        $url = trim((string)$img);
-                        if (!empty($url)) $gorseller[] = $url;
-                    }
-                }
-            }
-
-            // Ürün veritabanında var mı kontrol ediyoruz
-            $existingProduct = Product::where('sku', $stok_kodu)->first();
-
-            if ($existingProduct) {
-                // Hassas float ve stok karşılaştırması
-                $eskiFiyat = round((float)$existingProduct->price, 2);
-                $yeniFiyat = round((float)($satis_fiyati > 0 ? $satis_fiyati : $existingProduct->price), 2);
-
-                $eskiStok  = (int)$existingProduct->stock;
-                $yeniStok  = (int)$stok;
-
-                $isPriceChanged = abs($eskiFiyat - $yeniFiyat) > 0.001;
-                $isStockChanged = $eskiStok !== $yeniStok;
-
-                // SADECE Gerçekten Fiyat veya Stok Değiştiyse Güncelle (updated_at sadece o zaman oynar)
-                if ($isPriceChanged || $isStockChanged) {
-                    $existingProduct->update([
-                        'price'       => $yeniFiyat,
-                        'stock'       => $yeniStok,
-                        'images'      => !empty($gorseller) ? $gorseller : $existingProduct->images,
-                        'category_id' => $categoryId ?? $existingProduct->category_id,
-                    ]);
-                    $guncellenenSayisi++;
+        // Görsel işleme
+        $gorseller = [];
+        if (isset($urun->images)) {
+            if (isset($urun->images->image)) {
+                foreach ($urun->images->image as $img) {
+                    $url = trim((string)$img);
+                    if (!empty($url)) $gorseller[] = $url;
                 }
             } else {
-                // Yeni ürün ilk defa ekleniyor
-                Product::create([
-                    'sku'         => $stok_kodu,
-                    'name'        => $urun_adi,
-                    'brand'       => $marka,
-                    'barcode'     => $barkod,
-                    'model_code'  => $model_code,
-                    'color'       => $color,
-                    'gender'      => $gender,
-                    'description' => $aciklama,
-                    'slug'        => Str::slug($urun_adi) . '-' . uniqid(),
-                    'price'       => $satis_fiyati > 0 ? $satis_fiyati : 100.00,
-                    'stock'       => $stok,
-                    'images'      => $gorseller,
-                    'category_id' => $categoryId,
-                ]);
-
-                $eklenenSayisi++;
+                foreach ($urun->images->children() as $img) {
+                    $url = trim((string)$img);
+                    if (!empty($url)) $gorseller[] = $url;
+                }
             }
         }
 
-        Setting::updateOrCreate(['key' => 'last_sync_time'], ['value' => now()]);
+        // Ürün veritabanında var mı kontrol ediyoruz
+        $existingProduct = Product::where('sku', $stok_kodu)->first();
 
-        return redirect()->back()->with('success', "Senkronizasyon başarılı: Eklenen: {$eklenenSayisi}, Güncellenen: {$guncellenenSayisi}");
+        if ($existingProduct) {
+            // Nesne özelliklerini XML'den gelen yeni değerlerle güncelliyoruz
+            $existingProduct->name        = (string) $urun_adi;
+            $existingProduct->brand       = (string) $marka;
+            $existingProduct->barcode     = !empty($barkod) ? (string) $barkod : $existingProduct->barcode;
+            $existingProduct->model_code  = !empty($model_code) ? (string) $model_code : $existingProduct->model_code;
+            $existingProduct->color       = !empty($color) ? (string) $color : $existingProduct->color;
+            $existingProduct->gender      = !empty($gender) ? (string) $gender : $existingProduct->gender;
+            $existingProduct->description = !empty($aciklama) ? (string) $aciklama : $existingProduct->description;
+            
+            // Fiyat ve stoğu kesin olarak float ve int yapıyoruz
+            $existingProduct->price       = $satis_fiyati > 0 ? round((float)$satis_fiyati, 2) : (float)$existingProduct->price;
+            $existingProduct->stock       = (int) $stok;
+            
+            if (!empty($gorseller)) {
+                $existingProduct->images  = $gorseller;
+            }
+            if ($categoryId) {
+                $existingProduct->category_id = (int) $categoryId;
+            }
+
+            // Eğer gerçekten bir alan değiştiyse (isDirty)
+            if ($existingProduct->isDirty()) {
+                \Illuminate\Support\Facades\Log::info("Güncellenen Ürün SKU: {$stok_kodu}");
+                $existingProduct->save();
+                $guncellenenSayisi++;
+            }
+        } else {
+            // Yeni ürün ilk defa ekleniyor
+            Product::create([
+                'sku'         => $stok_kodu,
+                'name'        => $urun_adi,
+                'brand'       => $marka,
+                'barcode'     => $barkod,
+                'model_code'  => $model_code,
+                'color'       => $color,
+                'gender'      => $gender,
+                'description' => $aciklama,
+                'slug'        => Str::slug($urun_adi) . '-' . uniqid(),
+                'price'       => $satis_fiyati > 0 ? $satis_fiyati : 100.00,
+                'stock'       => $stok,
+                'images'      => $gorseller,
+                'category_id' => $categoryId,
+            ]);
+
+            $eklenenSayisi++;
+        }
     }
+
+    Setting::updateOrCreate(['key' => 'last_sync_time'], ['value' => now()]);
+
+    return redirect()->back()->with('success', "Senkronizasyon başarılı: Eklenen: {$eklenenSayisi}, Güncellenen: {$guncellenenSayisi}");
+}
 }
