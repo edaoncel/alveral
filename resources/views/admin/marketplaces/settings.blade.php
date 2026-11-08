@@ -56,6 +56,82 @@
     @endif
 
     <!-- HIZLI ÖZET İSTATİSTİKLERİ -->
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h3 class="text-lg font-bold text-gray-800">Canlı Senkronizasyon Durumu</h3>
+            <p class="text-sm text-gray-500">Sistem verileri otomatik olarak her 30 dakikada bir günceller.</p>
+        </div>
+        <!-- Geri Sayım ve Sayaç Alanı -->
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <span class="text-xs text-gray-400 block">Sonraki Otomatik Senkronizasyon:</span>
+                <span id="countdown-timer" class="text-lg font-mono font-bold text-indigo-600">30:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- İlerleme Çubuğu -->
+    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+        <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-1000" style="width: 100%;"></div>
+    </div>
+</div>
+
+<script>
+    // 30 dakika = 1800 saniye
+    const TOTAL_TIME = 1800;
+    
+    let timeLeft = parseInt(localStorage.getItem('sync_time_left'));
+    
+    // Eğer hafızada süre yoksa veya geçersizse 1800 saniyeden başlat
+    if (isNaN(timeLeft) || timeLeft <= 0 || timeLeft > TOTAL_TIME) {
+        timeLeft = TOTAL_TIME;
+    }
+
+    let totalSyncs = parseInt(localStorage.getItem('total_syncs')) || {{ $totalSyncs ?? 0 }};
+    
+    const timerDisplay = document.getElementById('countdown-timer');
+    const progressBar = document.getElementById('progress-bar');
+    const syncCountDisplay = document.getElementById('sync-count');
+
+    if(syncCountDisplay) syncCountDisplay.textContent = totalSyncs;
+
+    // Saniyeyi "DK:SN" (Örn: 29:45) formatına çeviren yardımcı fonksiyon
+    fnFormatTime = (seconds) => {
+        let minutes = Math.floor(seconds / 60);
+        let remainingSeconds = seconds % 60;
+        return minutes.toString().padStart(2, '0') + ':' + remainingSeconds.toString().padStart(2, '0');
+    };
+
+    // İlk yüklemede ekrana yansıt
+    if(timerDisplay) timerDisplay.textContent = fnFormatTime(timeLeft);
+    if(progressBar) progressBar.style.width = ((timeLeft / TOTAL_TIME) * 100) + '%';
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        localStorage.setItem('sync_time_left', timeLeft);
+        
+        if(timerDisplay) timerDisplay.textContent = fnFormatTime(timeLeft);
+        
+        let progressPercent = (timeLeft / TOTAL_TIME) * 100;
+        if(progressBar) progressBar.style.width = progressPercent + '%';
+
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            
+            localStorage.setItem('sync_time_left', TOTAL_TIME);
+
+            // Süre dolduğunda butonu tetikle veya sayfayı yenile
+            let syncButton = document.querySelector('#sync-button') || document.querySelector('form[action*="sync"] button') || document.querySelector('button[type="submit"]');
+            
+            if (syncButton) {
+                syncButton.click();
+            } else {
+                location.reload();
+            }
+        }
+    }, 1000);
+</script>
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card border-0 shadow-sm rounded-4 bg-white p-3">
@@ -93,7 +169,7 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-semibold">XML Senkronizasyonu</div>
-                        <h4 class="fw-bold mb-0 text-dark">Otomatik (24s)</h4>
+                        <h4 class="fw-bold mb-0 text-dark"><span id="sync-count">{{ $totalSyncs ?? 0 }}</span></h4>
                     </div>
                 </div>
             </div>

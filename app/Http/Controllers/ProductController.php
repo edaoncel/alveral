@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Models\Setting;
 
 class ProductController extends Controller
 {
@@ -344,4 +345,79 @@ public function exportExcel()
 
         return redirect()->route('admin.products.index')->with('success', "Tüm ürünlerin markası başarıyla {$newBrand} olarak güncellendi.");
     }
+
+public function syncFromXmlApi(Request $request)
+{
+    // Yukarıda yazdığımız senkronizasyon mantığının aynısı
+    $savedSetting = Setting::where('key', 'saved_xml_url')->first();
+    $pathSetting = Setting::where('key', 'saved_xml_path')->first();
+    
+    $xmlContent = null;
+
+    if ($savedSetting && !empty($savedSetting->value)) {
+        $xmlContent = @file_get_contents($savedSetting->value . '?t=' . time());
+    } elseif ($pathSetting && file_exists($pathSetting->value)) {
+        $xmlContent = @file_get_contents($pathSetting->value);
+    }
+
+    if (!$xmlContent) {
+        return response()->json(['status' => 'error', 'message' => 'XML bulunamadı!'], 400);
+    }
+
+    $xml = @simplexml_load_string($xmlContent);
+    if ($xml === false) {
+        return response()->json(['status' => 'error', 'message' => 'XML okunamadı!'], 400);
+    }
+
+    $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? $xml->children()));
+    $islenenSayisi = 0;
+    $firma_kar = 26.00;
+
+    foreach ($urunlerListesi as $urun) {
+        $stok_kodu = trim((string)($urun->sku ?? $urun->StokKodu ?? ''));
+        if (empty($stok_kodu)) continue;
+
+        $urun_adi = (string)($urun->name ?? $urun->UrunAdi ?? 'İsimsiz');
+        $alis_fiyati = floatval($urun->price ?? $urun->Fiyat ?? 0);
+        $stok = intval($urun->stock ?? $urun->Stok ?? 10);
+        $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? 'Genel'));
+
+        if (!empty($kategoriAdi)) {
+            Category::firstOrCreate(
+                ['name' => $kategoriAdi],
+                ['slug' => Str::slug($kategoriAdi), 'show_in_menu' => 1]
+            );
+        }
+
+        $gorseller = [];
+        if (isset($urun->images->image)) {
+            foreach ($urun->images->image as $img) {
+                $gorseller[] = (string)$img;
+            }
+        }
+
+        $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
+
+        Product::updateOrCreate(
+            ['sku' => $stok_kodu],
+            [
+                'name'              => $urun_adi,
+                'slug'              => Str::slug($urun_adi) . '-' . rand(1000, 9999),
+                'price'             => $satis_fiyati > 0 ? $satis_fiyati : 100.00,
+                'stock'             => $stok,
+                'images'            => $gorseller,
+                'affiliate_url'     => '#',
+                'is_synced_updated' => true,
+            ]
+        );
+        $islenenSayisi++;
+    }
+
+    // JavaScript'in beklediği JSON yanıtı döndürüyoruz
+    return response()->json([
+        'status' => 'success', 
+        'message' => "{$islenenSayisi} ürün başarıyla senkronize edildi!",
+        'total' => Product::count() // Güncel ürün sayısını da gönderiyoruz ki ekranda güncelleyebilesin
+    ]);
+}
 }

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use App\Models\Setting;
 use App\Models\Category;
+use App\Models\Product;
 
 class CategoryController extends Controller
 {
@@ -119,7 +120,6 @@ class CategoryController extends Controller
 
 public function syncFromXml()
 {
-    // Veritabanındaki sabit ayarlardan XML URL'sini veya dosya yolunu alalım
     $savedSetting = Setting::where('key', 'saved_xml_url')->first();
     $pathSetting = Setting::where('key', 'saved_xml_path')->first();
     
@@ -127,7 +127,7 @@ public function syncFromXml()
 
     if ($savedSetting && !empty($savedSetting->value)) {
         try {
-            $xmlContent = @file_get_contents($savedSetting->value);
+            $xmlContent = @file_get_contents($savedSetting->value . '?t=' . time());
         } catch (\Exception $e) {
             // URL okunamazsa dosya yolunu deneriz
         }
@@ -138,7 +138,7 @@ public function syncFromXml()
     }
 
     if (!$xmlContent) {
-        return redirect()->back()->with('error', "Kayıtlı bir XML URL adresi veya dosyası bulunamadı! Lütfen önce Pazaryeri Ayarları sayfasından XML kaydedin.");
+        return redirect()->back()->with('error', "Kayıtlı bir XML URL adresi veya dosyası bulunamadı!");
     }
 
     $xml = @simplexml_load_string($xmlContent);
@@ -146,27 +146,51 @@ public function syncFromXml()
         return redirect()->back()->with('error', "XML içeriği okunamadı veya bozuk formatta!");
     }
 
-    $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? []));
+    $urunlerListesi = isset($xml->product) ? $xml->product : ($xml->Urun ?? ($xml->item ?? $xml->children()));
     $eklenenSayisi = 0;
+    $firma_kar = 26.00;
 
     foreach ($urunlerListesi as $urun) {
-        $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? ''));
+        $stok_kodu = trim((string)($urun->sku ?? $urun->StokKodu ?? ''));
+        if (empty($stok_kodu)) continue;
+
+        $urun_adi = (string)($urun->name ?? $urun->UrunAdi ?? 'İsimsiz');
+        $alis_fiyati = floatval($urun->price ?? $urun->Fiyat ?? 0);
+        $stok = intval($urun->stock ?? $urun->Stok ?? 10);
+        $kategoriAdi = trim((string)($urun->category ?? $urun->Kategori ?? 'Genel'));
 
         if (!empty($kategoriAdi)) {
-            $exists = Category::where('name', $kategoriAdi)->exists();
-            
-            if (!$exists) {
-                Category::create([
-                    'name' => $kategoriAdi,
-                    'slug' => Str::slug($kategoriAdi),
-                    'show_in_menu' => 1
-                ]);
-                $eklenenSayisi++;
+            Category::firstOrCreate(
+                ['name' => $kategoriAdi],
+                ['slug' => Str::slug($kategoriAdi), 'show_in_menu' => 1]
+            );
+        }
+
+        $gorseller = [];
+        if (isset($urun->images->image)) {
+            foreach ($urun->images->image as $img) {
+                $gorseller[] = (string)$img;
             }
         }
+
+        $satis_fiyati = round($alis_fiyati * (1 + ($firma_kar / 100)), 2);
+
+        Product::updateOrCreate(
+            ['sku' => $stok_kodu],
+            [
+                'name'              => $urun_adi,
+                'slug'              => Str::slug($urun_adi) . '-' . rand(1000, 9999),
+                'price'             => $satis_fiyati > 0 ? $satis_fiyati : 100.00,
+                'stock'             => $stok,
+                'images'            => $gorseller,
+                'affiliate_url'     => '#',
+                'is_synced_updated' => true,
+            ]
+        );
+        $eklenenSayisi++;
     }
 
-    return redirect()->back()->with('success', "Senkronizasyon başarılı: <b>{$eklenenSayisi}</b> yeni kategori XML'den çekilerek eklendi!");
+    return redirect()->back()->with('success', "Senkronizasyon başarılı: <b>{$eklenenSayisi}</b> ürün başarıyla işlendi ve güncellendi!");
 }
 
 public function deleteAllCategories()

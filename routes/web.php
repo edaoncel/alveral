@@ -34,6 +34,7 @@ Route::prefix('yonetim')->name('admin.')->group(function () {
         Route::delete('/products/destroy-all', [ProductController::class, 'destroyAll'])->name('products.destroy-all');
         Route::resource('products', ProductController::class);
         Route::resource('products', ProductController::class);
+        Route::post('/admin/api/trigger-sync', [ProductController::class, 'syncFromXmlApi'])->name('admin.api.trigger-sync');
         
         Route::post('/categories/sync-xml', [CategoryController::class, 'syncFromXml'])->name('categories.sync-xml');
         Route::delete('/categories/delete-all', [CategoryController::class, 'deleteAllCategories'])->name('categories.deleteAll');
