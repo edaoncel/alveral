@@ -219,7 +219,7 @@ public function exportExcel()
     };
 
     $callback = function() use ($products, $trToEn) {
-        echo "\xEF\xBB\xBF";
+        echo "\xEF\xBB\xBF"; // UTF-8 BOM
         
         echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
         echo '<head>';
@@ -227,7 +227,7 @@ public function exportExcel()
         echo '<style>';
         echo '  table { border-collapse: collapse; font-family: "Segoe UI", Tahoma, Arial, sans-serif; font-size: 13px; width: 100%; }';
         echo '  th { background-color: #1b5e20; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #0d3b10; padding: 12px; white-space: nowrap; }';
-        echo '  td { border: 1px solid #dcdcdc; padding: 10px; vertical-align: middle; white-space: nowrap; }';
+        echo '  td { border: 1px solid #dcdcdc; padding: 10px; vertical-align: middle; }';
         echo '  .row-even { background-color: #f9f9f9; }';
         echo '  .num-cell { text-align: right; font-weight: 500; }';
         echo '  .center-cell { text-align: center; }';
@@ -236,22 +236,23 @@ public function exportExcel()
         echo '<body>';
         echo '<table>';
         
+        // Tablo Başlıkları (İstediğiniz Sütunlar - İdefix, Amazon ve Pazarama çıkarıldı)
         echo '<thead>';
         echo '<tr>';
-        echo '<th style="width: 180px;">Stok Kodu (SKU)</th>';
-        echo '<th style="width: 120px;">Stok Adedi</th>';
-        echo '<th style="width: 350px;">Stok Adi (Urun Adi)</th>';
-        echo '<th style="width: 400px;">Aciklama</th>';
-        echo '<th style="width: 220px;">Kategori</th>';
-        echo '<th style="width: 150px;">Fiyat (TL)</th>';
-        echo '<th style="width: 180px;">Indirimli Fiyat (TL)</th>';
-        echo '<th style="width: 130px;">Urun Durumu</th>';
-        echo '<th style="width: 300px;">Trendyol Linki</th>';
-        echo '<th style="width: 300px;">Hepsiburada Linki</th>';
-        echo '<th style="width: 300px;">Idefix Linki</th>';
-        echo '<th style="width: 300px;">Amazon Linki</th>';
-        echo '<th style="width: 300px;">Pazarama Linki</th>';
-        echo '<th style="width: 180px;">Olusturulma Tarihi</th>';
+        echo '<th style="width: 150px;">SKU</th>';
+        echo '<th style="width: 150px;">Barkod</th>';
+        echo '<th style="width: 150px;">Marka</th>';
+        echo '<th style="width: 180px;">Kategori</th>';
+        echo '<th style="width: 100px;">Stok Adedi</th>';
+        echo '<th style="width: 300px;">Ürün Adı</th>';
+        echo '<th style="width: 350px;">Açıklama</th>';
+        echo '<th style="width: 120px;">Renk</th>';
+        echo '<th style="width: 120px;">Cinsiyet</th>';
+        echo '<th style="width: 130px;">Fiyat (TL)</th>';
+        echo '<th style="width: 150px;">İndirimli Fiyat (TL)</th>';
+        echo '<th style="width: 250px;">Trendyol Linki</th>';
+        echo '<th style="width: 250px;">Hepsiburada Linki</th>';
+        echo '<th style="width: 400px;">Görsel Linkleri</th>';
         echo '</tr>';
         echo '</thead>';
         echo '<tbody>';
@@ -260,21 +261,30 @@ public function exportExcel()
         foreach ($products as $product) {
             $rowClass = ($i % 2 === 0) ? '' : 'class="row-even"';
             
+            // Görsel yollarını tam URL'ye dönüştürüp virgülle birleştiriyoruz
+            $imageLinks = '-';
+            if (!empty($product->images) && is_array($product->images)) {
+                $fullImageUrls = array_map(function($img) {
+                    return url($img);
+                }, $product->images);
+                $imageLinks = implode(', ', $fullImageUrls);
+            }
+
             echo "<tr $rowClass>";
             echo '<td class="center-cell" style="font-weight: bold;">' . htmlspecialchars($trToEn($product->sku)) . '</td>';
+            echo '<td class="center-cell">' . htmlspecialchars($trToEn($product->barcode ?? '-')) . '</td>';
+            echo '<td>' . htmlspecialchars($trToEn($product->brand ?? '-')) . '</td>';
+            echo '<td>' . htmlspecialchars($trToEn($product->category->name ?? 'Kategorisiz')) . '</td>';
             echo '<td class="center-cell" style="font-weight: bold; color: #2e7d32;">' . $product->stock . '</td>';
             echo '<td>' . htmlspecialchars($trToEn($product->name)) . '</td>';
             echo '<td>' . htmlspecialchars($trToEn(strip_tags($product->description ?? '-'))) . '</td>';
-            echo '<td>' . htmlspecialchars($trToEn($product->category->name ?? 'Kategorisiz')) . '</td>';
+            echo '<td class="center-cell">' . htmlspecialchars($trToEn($product->color ?? '-')) . '</td>';
+            echo '<td class="center-cell">' . htmlspecialchars($trToEn($product->gender ?? '-')) . '</td>';
             echo '<td class="num-cell">' . number_format($product->price, 2, ',', '.') . ' TL</td>';
             echo '<td class="num-cell">' . ($product->discount_price ? number_format($product->discount_price, 2, ',', '.') . ' TL' : '-') . '</td>';
-            echo '<td class="center-cell">' . (($product->is_active ?? true) ? 'Aktif' : 'Pasif') . '</td>';
             echo '<td>' . htmlspecialchars($trToEn($product->trendyol_url ?? '-')) . '</td>';
             echo '<td>' . htmlspecialchars($trToEn($product->hepsiburada_url ?? '-')) . '</td>';
-            echo '<td>' . htmlspecialchars($trToEn($product->idefix_url ?? '-')) . '</td>';
-            echo '<td>' . htmlspecialchars($trToEn($product->amazon_url ?? '-')) . '</td>';
-            echo '<td>' . htmlspecialchars($trToEn($product->pazarama_url ?? '-')) . '</td>';
-            echo '<td class="center-cell">' . ($product->created_at ? $product->created_at->format('d.m.Y H:i') : '-') . '</td>';
+            echo '<td>' . htmlspecialchars($imageLinks) . '</td>';
             echo '</tr>';
             
             $i++;
